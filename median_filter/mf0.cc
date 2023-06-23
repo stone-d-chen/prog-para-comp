@@ -7,5 +7,6 @@ This is the function you need to implement. Quick reference:
   max(x-hx, 0) <= a < min(x+hx+1, nx), max(y-hy, 0) <= b < min(y+hy+1, ny)
   in out[x + y*nx].
 */
-void mf(int ny, int nx, int hy, int hx, const float *in, float *out) {
+void mf(int ny, int nx, int hy, int hx, const float *in, float *out)
+{
 }
