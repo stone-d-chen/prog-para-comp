@@ -43,8 +43,11 @@ void mf(int ny, int nx, int hy, int hx, const float* in, float* out)
       }
       else
       {
-        median = *QuickSelect(arr, total, total / 2);
-        median += *QuickSelect(arr, total, total / 2 + 1);
+        // median = *QuickSelect(arr, total, total / 2);
+        // median += *QuickSelect(arr, total, total / 2 + 1);
+        f32 *ptr = QuickSelect(arr, total, total / 2);
+        median = *ptr;
+        median += *QuickSelect(ptr + 1, total/2, 1);
         median /= 2;
       }
 
