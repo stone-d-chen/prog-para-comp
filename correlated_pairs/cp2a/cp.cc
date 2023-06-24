@@ -13,10 +13,9 @@ typedef int s32;
 typedef float f32;
 typedef double f64;
 
-
 void correlate(int ny, int nx, const float *data, float *result)
 {
-    const s32 VecDim = 20;
+    const s32 VecDim = 12;
     s32 VecCount = (nx + VecDim - 1) / VecDim;
     s32 PaddedX = VecDim * VecCount;
 
@@ -76,3 +75,12 @@ void correlate(int ny, int nx, const float *data, float *result)
 
     free(NormData);
 }
+
+/*
+16 seems the best so far
+benchmarks/2	3.569637 s	16,016,000,000	4.5
+the input contains 4000 × 1000 pixels, and the output should contain 4000 × 4000 pixels
+
+still getting dominated on the leaderboard
+
+*/
