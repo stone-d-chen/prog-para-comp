@@ -1,1 +1,3 @@
 # Median Filter
+
+Median filter with linear-time median find, though apparently the [standard library implements](https://en.cppreference.com/w/cpp/algorithm/nth_element) this already...

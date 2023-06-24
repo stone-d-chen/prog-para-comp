@@ -1,5 +1,13 @@
 # Programming Parallel Computers
 
+## Todos (potentially)
+
+### Median Filter
+
+-   Hand rolled, median of medians
+-   recursive -\> iterative
+-   refactor quicksort into a separate partition function
+
 ## Updates
 
 2023/23/6
