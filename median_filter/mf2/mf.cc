@@ -29,7 +29,6 @@ void swap(f32 &a, f32 &b)
 }
 
 
-
 void mf(int ny, int nx, int hy, int hx, const float* in, float* out)
 {
 
