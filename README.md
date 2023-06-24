@@ -10,6 +10,10 @@
 
 ## Updates
 
+2023/24/6
+
+-   OMP parallel version, currently fastest solution, no idea why though...
+
 2023/23/6
 
 -   Median Filter sequential, had some issues getting QuickSelect working, should do a more in-depth write up
