@@ -2,3 +2,8 @@
 *.ilk
 *.obj
 *.pdb
+*.txt
+*.py
+*.json
+*.sh
+.ppc
