@@ -8,7 +8,7 @@ void swap(f32 *a, f32 *b)
     *b = temp;
 }
 
-u32 Partition(f32 *arr, u32 count, u32 index)
+u32 Partition(f32 *arr, u32 count)
 {
     s32 pivotIdx = (rand() + rand()) % count;
     f32 pivot = arr[pivotIdx];
@@ -38,8 +38,8 @@ u32 Partition(f32 *arr, u32 count, u32 index)
 
 f32 *QuickSelect(f32 *arr, u32 count, u32 rank)
 {
-    if(count == 1 & rank == 1) return(arr);
-    s32 pivotIdx = (rand() + rand()) % count;
+    if((count == 1) & (rank == 1)) return(arr);
+    s32 pivotIdx = rand() % count;
     f32 pivot = arr[pivotIdx];
 
     u32 frontIdx = 0;
@@ -61,7 +61,7 @@ f32 *QuickSelect(f32 *arr, u32 count, u32 rank)
     }
 
     u32 LeftCount = frontIdx;
-    u32 RightCount = count - backIdx;
+    u32 RightCount = count - LeftCount;
     if(LeftCount >= rank)
     {
         u32 newIndex = rank;
@@ -79,7 +79,7 @@ f32 *QuickSelect(f32 *arr, u32 count, u32 rank)
 }
 
 
-#if 1
+#if 0
 
 int main()
 {
