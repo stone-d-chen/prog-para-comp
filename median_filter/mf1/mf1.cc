@@ -39,15 +39,24 @@ void mf(int ny, int nx, int hy, int hx, const float* in, float* out)
       f32 median = 0;
       if (total % 2 == 1)
       {
-        median = *QuickSelect(arr, total, total / 2 + 1);
+        // median = *QuickSelect(arr, total, total / 2 + 1);
+        std::nth_element(arr, arr + total/2, arr + total);
+        median = arr[total/2];
       }
       else
       {
         // median = *QuickSelect(arr, total, total / 2);
         // median += *QuickSelect(arr, total, total / 2 + 1);
-        f32 *ptr = QuickSelect(arr, total, total / 2);
-        median = *ptr;
-        median += *QuickSelect(ptr + 1, total/2, 1);
+        
+        // f32 *ptr = QuickSelect(arr, total, total / 2);
+        // median = *ptr;
+        // median += *QuickSelect(ptr + 1, total/2, 1);
+        // median /= 2;
+
+        std::nth_element(arr, arr + (total/2 - 1), arr + total);
+        median = arr[total/2 - 1] ;
+        std::nth_element(arr + total/2 - 1, arr, arr + total);
+        median += arr[total/2 ] ;
         median /= 2;
       }
 
