@@ -20,10 +20,10 @@ void correlate(const int ny, const int nx, const float *data, float *result)
     f64 *NormX = (f64 *)malloc(ny*nx*sizeof(f64));
 
     // normalization step
-    for(u32 Row = 0; Row < ny; ++Row)
+    for(s32 Row = 0; Row < ny; ++Row)
     {
         f64 Sum = 0;
-        for(u32 Col = 0; Col < nx; ++Col)
+        for(s32 Col = 0; Col < nx; ++Col)
         {
             f64 val = data[nx*Row + Col];
             Sum += val;
@@ -32,17 +32,37 @@ void correlate(const int ny, const int nx, const float *data, float *result)
         f64 Mean = Sum / nx; 
 
         f64 SumSqY = 0;
-        for(u32 Col = 0; Col < nx; ++Col)
+        for(s32 Col = 0; Col < nx; ++Col)
         {
-            f64 val = NormX[nx*Row + Col];
+            f64 val = NormX[nx*Row + Col] - Mean;
+            NormX[nx*Row + Col] = val;
             SumSqY += val * val;
-            NormX[nx*Row + Col] = val - Mean;
         }
         f64 StdY = 1/sqrt(SumSqY);
 
-        for(u32 Col = 0; Col < nx; ++Col)
+        for(s32 Col = 0; Col < nx; ++Col)
         {
-            NormX[nx*Row + Col] /= StdY;
+            NormX[nx*Row + Col] *= StdY;
         }
     }
+
+    // XX'
+
+    for(s32 Row = 0; Row < ny; ++Row)
+    {
+        for(s32 Col = Row; Col < ny; ++Col)
+        {
+            f64 DotProd = 0;
+            for(s32 k = 0; k < nx; ++k)
+            {
+                //                 move col      row of transpose is col
+                DotProd += NormX[nx*Row + k] * NormX[nx*Col + k];
+            }
+            // result row dim is ny now
+            result[ny*Row + Col] = DotProd;
+        }
+    }
+
+    free(NormX);
+
 }
