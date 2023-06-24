@@ -36,9 +36,9 @@ u32 Partition(f32 *arr, u32 count, u32 index)
 
 }
 
-f32 *QuickSelect(f32 *arr, u32 count, u32 index)
+f32 *QuickSelect(f32 *arr, u32 count, u32 rank)
 {
-    if(count == 1 & index == 1) return(arr);
+    if(count == 1 & rank == 1) return(arr);
     s32 pivotIdx = (rand() + rand()) % count;
     f32 pivot = arr[pivotIdx];
 
@@ -62,15 +62,15 @@ f32 *QuickSelect(f32 *arr, u32 count, u32 index)
 
     u32 LeftCount = frontIdx;
     u32 RightCount = count - backIdx;
-    if(LeftCount >= index)
+    if(LeftCount >= rank)
     {
-        u32 newIndex = index;
+        u32 newIndex = rank;
         f32 *newArray = arr;
         return(QuickSelect(newArray, LeftCount, newIndex));
     }
     else
     {
-        u32 newIndex = index - LeftCount;
+        u32 newIndex = rank - LeftCount;
         f32 *newArray = arr + LeftCount;
         return(QuickSelect(newArray, RightCount, newIndex));
     }
