@@ -38,11 +38,11 @@ void correlate(const int ny, const int nx, const float *data, float *result)
             NormX[nx*Row + Col] = val;
             SumSqY += val * val;
         }
-        f64 StdY = 1/sqrt(SumSqY);
+        f64 InvStdY = 1/sqrt(SumSqY);
 
         for(s32 Col = 0; Col < nx; ++Col)
         {
-            NormX[nx*Row + Col] *= StdY;
+            NormX[nx*Row + Col] *= InvStdY;
         }
     }
 
@@ -66,3 +66,15 @@ void correlate(const int ny, const int nx, const float *data, float *result)
     free(NormX);
 
 }
+
+/* 
+Rank Time Intr10e9 Cyc10e9	GHz Threads	 Lines	Nickname
+1	4.80	12.3	18.9	3.95	1.00	54	nweeks
+2	6.90	24.2	30.9	4.48	1.00	46	Aneesh Mulye
+3	7.02	48.3	31.5	4.48	1.00	27	Waido
+10	7.35	24.2	32.7	4.46	1.00	54	
+
+my 7.4 seconds, though the cycle count of #1 is suspicious...half? 
+
+
+*/
