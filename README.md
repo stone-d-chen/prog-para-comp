@@ -5,7 +5,7 @@
 ### Median Filter
 
 -   Hand rolled, median of medians
--   recursive -\> iterative
+-   convert recursive -\> iterative
 -   refactor quicksort into a separate partition function
 
 ## Updates
@@ -13,6 +13,7 @@
 2023/24/6
 
 -   OMP parallel version, currently fastest solution, no idea why though...
+-   cp1, cp2, sequential and ILP, tried ILP on the processing phase, seems to slow things down
 
 2023/23/6
 
