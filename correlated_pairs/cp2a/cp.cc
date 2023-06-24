@@ -16,7 +16,7 @@ typedef double f64;
 
 void correlate(int ny, int nx, const float *data, float *result)
 {
-    const s32 VecDim = 8;
+    const s32 VecDim = 20;
     s32 VecCount = (nx + VecDim - 1) / VecDim;
     s32 PaddedX = VecDim * VecCount;
 
@@ -40,6 +40,7 @@ void correlate(int ny, int nx, const float *data, float *result)
         for(s32 Col = 0; Col < nx; ++Col)
         {
             f64 val = NormData[PaddedX*Row + Col] - Mean;
+            NormData[PaddedX*Row + Col] = val;
             SumSqY += val*val;
         }
         f64 InvStdY = 1/sqrt(SumSqY);
@@ -49,8 +50,29 @@ void correlate(int ny, int nx, const float *data, float *result)
         }
     }
 
-    
+    for(s32 Row = 0; Row < ny; ++Row)
+    {
+        for(s32 Col = Row; Col < ny; ++Col)
+        {
+            // new inner start
+            f64 DotProd[VecDim] = {};
+            for(s32 VecIdx = 0; VecIdx < VecCount; ++VecIdx)
+            {
+                for(s32 ItemIdx = 0; ItemIdx < VecDim; ++ItemIdx)
+                {
+                    DotProd[ItemIdx] += NormData[PaddedX*Row + VecIdx*VecDim + ItemIdx] * NormData[PaddedX*Col + VecIdx*VecDim + ItemIdx];
+                }
+            }
 
+            f64 FinalSum = 0;
+            for(s32 ItemIdx = 0; ItemIdx < VecDim; ++ItemIdx)
+            {
+                FinalSum += DotProd[ItemIdx];
+            }
+
+            result[ny*Row + Col] = FinalSum;
+        }
+    }
 
     free(NormData);
 }
