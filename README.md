@@ -5,6 +5,7 @@
 2023/23/6
 
 -   Median Filter sequential, had some issues getting QuickSelect working, should do a more in-depth write up
+-   Turns out I could just use nth_element which is way faster
 
 ## Sources
 
