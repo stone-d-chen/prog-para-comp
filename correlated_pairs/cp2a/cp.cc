@@ -15,7 +15,7 @@ typedef double f64;
 
 void correlate(int ny, int nx, const float *data, float *result)
 {
-    const s32 VecDim = 8;
+    const s32 VecDim = 12;
     s32 VecCount = (nx + VecDim - 1) / VecDim;
     s32 PaddedX = VecDim * VecCount;
 
@@ -25,73 +25,28 @@ void correlate(int ny, int nx, const float *data, float *result)
     for(s32 Row = 0; Row < ny; ++Row)
     {
         //loop in vectors here?
-        // f64 Sum = 0;
-        // for(s32 Col = 0; Col < PaddedX; ++Col)
-        // {
-        //             // fill 0 if past data
-        //     f64 val = (Col < nx) ? data[nx*Row + Col] : 0;
-        //     Sum += val;
-        //     NormData[PaddedX*Row + Col] = val;
-        // }
-        // f64 SumSqY = 0;
-        // for(s32 Col = 0; Col < nx; ++Col)
-        // {
-        //     f64 val = NormData[PaddedX*Row + Col] - Mean;
-        //     NormData[PaddedX*Row + Col] = val;
-        //     SumSqY += val*val;
-        // }
-        // f64 InvStdY = 1/sqrt(SumSqY);
-        // for(s32 Col = 0; Col < nx; ++Col)
-        // {
-        //     NormData[PaddedX*Row + Col] *= InvStdY;
-        // }
-
-        f64 Sum[VecDim] = {};
-        for(s32 VecIdx = 0; VecIdx < VecCount; ++VecIdx)
+        f64 Sum = 0;
+        for(s32 Col = 0; Col < PaddedX; ++Col)
         {
-            for(s32 ItemIdx = 0; ItemIdx < VecDim; ++ItemIdx)
-            {
-                s32 Col = VecIdx*VecDim + ItemIdx;
-                f64 val = (Col < nx) ? data[nx*Row + Col] : 0;
-                Sum[ItemIdx] += val;
-                NormData[PaddedX*Row + Col] = val;
-            }
+                    // fill 0 if past data
+            f64 val = (Col < nx) ? data[nx*Row + Col] : 0;
+            Sum += val;
+            NormData[PaddedX*Row + Col] = val;
         }
-        f64 Mean = 0;
-        for(s32 ItemIdx = 0; ItemIdx < VecDim; ++ItemIdx)
-        {
-            Mean += Sum[ItemIdx];
-        }
-        Mean /= nx;
+        f64 Mean = Sum / nx;
 
-        f64 SumSq[VecDim] = {};
-        for(s32 VecIdx = 0; VecIdx < VecCount; ++VecIdx)
+        f64 SumSqY = 0;
+        for(s32 Col = 0; Col < nx; ++Col)
         {
-            for(s32 ItemIdx = 0; ItemIdx < VecDim; ++ItemIdx)
-            {
-                s32 Col = VecIdx*VecDim + ItemIdx;
-                f64 val = (Col < nx) ? NormData[PaddedX*Row + Col] - Mean : 0;
-                NormData[PaddedX*Row + Col] = val;
-                SumSq[ItemIdx] += val*val;
-            }
+            f64 val = NormData[PaddedX*Row + Col] - Mean;
+            NormData[PaddedX*Row + Col] = val;
+            SumSqY += val*val;
         }
-        f64 InvStdY = 0;
-        for(s32 ItemIdx = 0; ItemIdx < VecDim; ++ItemIdx)
+        f64 InvStdY = 1/sqrt(SumSqY);
+        for(s32 Col = 0; Col < nx; ++Col)
         {
-            InvStdY += SumSq[ItemIdx];
+            NormData[PaddedX*Row + Col] *= InvStdY;
         }
-        InvStdY = 1/sqrt(InvStdY);
-
-        for(s32 VecIdx = 0; VecIdx < VecCount; ++VecIdx)
-        {
-            for(s32 ItemIdx = 0; ItemIdx < VecDim; ++ItemIdx)
-            {
-                s32 Col = VecIdx*VecDim + ItemIdx;
-                NormData[PaddedX*Row + Col] *= InvStdY;
-
-            }
-        }
-
     }
 
     for(s32 Row = 0; Row < ny; ++Row)
