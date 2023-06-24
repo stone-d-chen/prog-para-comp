@@ -8,12 +8,35 @@ void swap(f32 *a, f32 *b)
     *b = temp;
 }
 
-// f32 *Partition(f32 *arr, u32 count, u32 index)
-// {
+u32 Partition(f32 *arr, u32 count, u32 index)
+{
+    s32 pivotIdx = (rand() + rand()) % count;
+    f32 pivot = arr[pivotIdx];
 
-// }
+    u32 frontIdx = 0;
+    u32 backIdx = count - 1;
 
-f32 *Partition(f32 *arr, u32 count, u32 index)
+    while (frontIdx < backIdx)
+    {
+        while (arr[frontIdx] < pivot) {
+            ++frontIdx;  //if we exit, then frontIdx points at >= pivot
+        }
+        while (arr[backIdx] > pivot) {
+            --backIdx; //exit, points at <= pivot
+        }
+        if (frontIdx < backIdx)
+        {
+            swap(arr + frontIdx++, arr + backIdx);
+            //left half will be pivot or less, right pivot or greater
+        }
+    }
+
+    // idx where values <= pivot, reminder is >= pivot
+    return(frontIdx);
+
+}
+
+f32 *QuickSelect(f32 *arr, u32 count, u32 index)
 {
     if(count == 1 & index == 1) return(arr);
     s32 pivotIdx = (rand() + rand()) % count;
@@ -21,7 +44,7 @@ f32 *Partition(f32 *arr, u32 count, u32 index)
 
     u32 frontIdx = 0;
     u32 backIdx = count - 1;
-    
+
     while(frontIdx < backIdx)
     {
         while(arr[frontIdx] < pivot) {
@@ -43,13 +66,13 @@ f32 *Partition(f32 *arr, u32 count, u32 index)
     {
         u32 newIndex = index;
         f32 *newArray = arr;
-        return(Partition(newArray, LeftCount, newIndex));
+        return(QuickSelect(newArray, LeftCount, newIndex));
     }
     else
     {
         u32 newIndex = index - LeftCount;
         f32 *newArray = arr + LeftCount;
-        return(Partition(newArray, RightCount, newIndex));
+        return(QuickSelect(newArray, RightCount, newIndex));
     }
 
 
@@ -61,10 +84,11 @@ f32 *Partition(f32 *arr, u32 count, u32 index)
 int main()
 {
     f32 test[] = {0.5, 6, 4.1, 1, 0, 0, 3.2};
-    f32 *ptr = Partition(test, 7, 3 + 1);
-    f32 *ptr2 = Partition(ptr+1, 7 - 4, 1);
+    f32 *ptr = QuickSelect(test, 7, 3 + 1);
+    f32 *ptr2 = QuickSelect(ptr+1, 7 - 4, 1);
     f32 test2[] = {0,0,0,1,0,1};
-    f32 *ptr3 = Partition(test2, 6, 4);
+    f32 *ptr3 = QuickSelect(test2, 6, 4);
+    u32 idx = Partition(test, 7, 5);
 
 }
 
