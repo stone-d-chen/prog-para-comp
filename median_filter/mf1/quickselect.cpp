@@ -8,9 +8,10 @@ void swap(f32 *a, f32 *b)
     *b = temp;
 }
 
+// TODO: start refactoring out partition
 u32 Partition(f32 *arr, u32 count)
 {
-    s32 pivotIdx = (rand() + rand()) % count;
+    s32 pivotIdx = rand() % count;
     f32 pivot = arr[pivotIdx];
 
     u32 frontIdx = 0;
