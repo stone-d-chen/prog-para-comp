@@ -33,9 +33,9 @@ void swap(f32 &a, f32 &b)
 void mf(int ny, int nx, int hy, int hx, const float* in, float* out)
 {
 
+  #pragma omp parallel for
   for (int CenterY = 0; CenterY < ny; ++CenterY)
   {
-  #pragma omp parallel for
     f32* arr = (f32*)malloc(4 * (hy + 1) *  (hx + 1) * sizeof(f32));
     for (int CenterX = 0; CenterX < nx; ++CenterX)
     {
