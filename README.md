@@ -2,6 +2,10 @@
 
 ## Todos (potentially)
 
+-   Figure out how to check the compiler type so I don't have to keep re-doing the intrinsics file switching gcc/msvc
+
+### Correlated Pairs
+
 ### Median Filter
 
 -   Hand rolled, median of medians
