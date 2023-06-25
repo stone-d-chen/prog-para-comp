@@ -15,7 +15,7 @@ typedef double f64;
 
 void correlate(int ny, int nx, const float *data, float *result)
 {
-    const s32 VecDim = 12;
+    const s32 VecDim = 8;
     s32 VecCount = (nx + VecDim - 1) / VecDim;
     s32 PaddedX = VecDim * VecCount;
 
