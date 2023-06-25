@@ -28,11 +28,6 @@ typedef struct
 {
     __m256d v;
 } f64x4;
-typedef struct
-{
-    __m128 v;
-} f32x4;
-
 
 f64x4 operator+(f64x4 a, f64x4 b)
 {
@@ -74,7 +69,7 @@ void correlate(int ny, int nx, const float *data, float *result)
     s32 VecCount = (nx + VecDim - 1) / VecDim;
     s32 PaddedX = VecDim * VecCount;
 
-    const s32 BlockDim = 3;
+    const s32 BlockDim = 2;
     s32 BlockCountY = (ny + BlockDim - 1) / BlockDim;
     s32 PaddedY = BlockCountY * BlockDim; 
 
@@ -106,6 +101,8 @@ void correlate(int ny, int nx, const float *data, float *result)
             NormData[PaddedX*Row + Col] *= InvStdY;
         }
     }
+
+    #pragma omp parallel for
     for(s32 Row = ny; Row < PaddedY; ++Row)
     {
         for(s32 Col = 0; Col < PaddedX; ++Col)
@@ -122,21 +119,35 @@ void correlate(int ny, int nx, const float *data, float *result)
         for(s32 Col =  Row; Col < ny; ++Col)
         {
             f64x4 DotProds[BlockDim][BlockDim] = {};
-            
 
             for(s32 VecIdx = 0; VecIdx < PaddedX; VecIdx += 4)
             {
-                f64x4 x0 = loadu((f64*)(NormData + PaddedX*(Row + 0) + VecIdx));
-                f64x4 x1 = loadu((f64*)(NormData + PaddedX*(Row + 1) + VecIdx));
-                f64x4 y0 = loadu((f64*)(NormData + PaddedX*(Col + 0) + VecIdx));
-                f64x4 y1 = loadu((f64*)(NormData + PaddedX*(Col + 1) + VecIdx));
-                DotProds[0][0] = DotProds[0][0] + (x0 * y0);
-                DotProds[0][1] = DotProds[0][1] + (x0 * y1);
-                DotProds[0][0] = DotProds[0][0] + (x0 * y0);
-                DotProds[0][0] = DotProds[0][0] + (x0 * y0);
+                for(s32 i = 0; i < BlockDim; ++i)
+                {
+                    for(s32 j = 0; j < BlockDim; ++j)
+                    {
+                        if((Row + i < ny) && (Col + j < ny))
+                        {
+                            f64x4 x = loadu((f64*)(NormData + PaddedX*(Row + i) + VecIdx));
+                            f64x4 y = loadu((f64*)(NormData + PaddedX*(Col + j) + VecIdx));
+                            DotProds[i][j] = DotProds[i][j] + (x * y);
+                        }
+                    }
+                }
+               
             }
-            f64 FinalSum = hadd(DotProds);
-            result[ny*Row + Col] = FinalSum;
+            
+
+            for(s32 i = 0; i < BlockDim; ++i)
+            {
+                for(s32 j = 0; j < BlockDim; ++j)
+                {
+                    if((Row + i < ny) && (Col + j < ny))
+                    {
+                        result[ny*(Row + i) + (Col + j)] = hadd(DotProds[i][j]);
+                    }
+                }
+            }
         }
     }
     free(NormData);
