@@ -6,6 +6,11 @@
 
 ### Correlated Pairs
 
+-   cp3a, major thing is probably ILP so add blocking, maybe 3x3, cache might get kind of nasty though
+
+    -   `loadu((f64)(NormData + PaddedX *(Row + i) + VecIdx)`
+    -   `loadu((f64)(NormData + PaddedX *(Col + j) + VecIdx)`
+
 ### Median Filter
 
 -   Hand rolled, median of medians
