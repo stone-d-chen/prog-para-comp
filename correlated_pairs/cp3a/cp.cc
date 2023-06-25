@@ -8,6 +8,31 @@
     benchmarks/2d.txt                 0.420s  pass
     benchmarks/3.txt                 10.955s  pass
     benchmarks/4.txt                 43.928s  pass
+
+2) blocking ILP 3x3
+    benchmarks/1.txt                  0.008s  pass
+    benchmarks/2a.txt                 0.164s  pass
+    benchmarks/2b.txt                 0.162s  pass
+    benchmarks/2c.txt                 0.143s  pass
+    benchmarks/2d.txt                 0.158s  pass
+    benchmarks/3.txt                  4.542s  pass
+    benchmarks/4.txt                 15.516s  pass
+
+gflops falling off suggests that I'm running into memory issues
+    benchmarks/1	0.017011 s	1,004,000,000	59.0
+    the input contains 1000 × 1000 pixels, and the output should contain 1000 × 1000 pixels
+    benchmarks/2a	0.161448 s	16,016,000,000	99.2
+    the input contains 4000 × 1000 pixels, and the output should contain 4000 × 4000 pixels
+    benchmarks/2b	0.163605 s	16,016,000,000	97.9
+    the input contains 4000 × 1000 pixels, and the output should contain 4000 × 4000 pixels
+    benchmarks/2c	0.164088 s	15,991,989,003	97.5
+    the input contains 3999 × 999 pixels, and the output should contain 3999 × 3999 pixels
+    benchmarks/2d	0.157263 s	16,040,029,005	102.0
+    the input contains 4001 × 1001 pixels, and the output should contain 4001 × 4001 pixels
+    benchmarks/3	3.441109 s	216,144,000,000	62.8
+    the input contains 6000 × 6000 pixels, and the output should contain 6000 × 6000 pixels
+    benchmarks/4	12.329532 s	729,324,000,000	59.2
+    the input contains 9000 × 9000 pixels, and the output should contain 9000 × 9000 pixels
 */
 
 
@@ -28,6 +53,7 @@ typedef struct
 {
     __m256d v;
 } f64x4;
+
 
 f64x4 operator+(f64x4 a, f64x4 b)
 {
@@ -69,9 +95,10 @@ void correlate(int ny, int nx, const float *data, float *result)
     s32 VecCount = (nx + VecDim - 1) / VecDim;
     s32 PaddedX = VecDim * VecCount;
 
-    const s32 BlockDim = 2;
-    s32 BlockCountY = (ny + BlockDim - 1) / BlockDim;
-    s32 PaddedY = BlockCountY * BlockDim; 
+    const s32 BlockDimY = 3;
+    const s32 BlockDimX = 3;
+    s32 BlockCountY = (ny + BlockDimY - 1) / BlockDimY;
+    s32 PaddedY = BlockCountY * BlockDimY; 
 
     f64 *NormData = (f64 *)malloc(PaddedY * PaddedX * sizeof(f64));
 
@@ -101,7 +128,7 @@ void correlate(int ny, int nx, const float *data, float *result)
             NormData[PaddedX*Row + Col] *= InvStdY;
         }
     }
-
+    
     #pragma omp parallel for
     for(s32 Row = ny; Row < PaddedY; ++Row)
     {
@@ -113,34 +140,31 @@ void correlate(int ny, int nx, const float *data, float *result)
 
 
     // the output dim
-    #pragma omp parallel for
-    for(s32 Row = 0; Row < ny; ++Row)
+    #pragma omp parallel for nowait
+    for(s32 Row = 0; Row < ny; Row+=BlockDimY)
     {
-        for(s32 Col =  Row; Col < ny; ++Col)
+        for(s32 Col =  Row; Col < ny; Col+=BlockDimX)
         {
-            f64x4 DotProds[BlockDim][BlockDim] = {};
+            f64x4 DotProds[BlockDimY][BlockDimX] = {};
 
-            for(s32 VecIdx = 0; VecIdx < PaddedX; VecIdx += 4)
+            for(s32 VecIdx = 0; VecIdx < PaddedX; VecIdx += VecDim)
             {
-                for(s32 i = 0; i < BlockDim; ++i)
+                for(s32 i = 0; i < BlockDimY; ++i)
                 {
-                    for(s32 j = 0; j < BlockDim; ++j)
+                    for(s32 j = 0; j < BlockDimX; ++j)
                     {
-                        if((Row + i < ny) && (Col + j < ny))
-                        {
                             f64x4 x = loadu((f64*)(NormData + PaddedX*(Row + i) + VecIdx));
                             f64x4 y = loadu((f64*)(NormData + PaddedX*(Col + j) + VecIdx));
                             DotProds[i][j] = DotProds[i][j] + (x * y);
-                        }
                     }
                 }
                
             }
             
 
-            for(s32 i = 0; i < BlockDim; ++i)
+            for(s32 i = 0; i < BlockDimY; ++i)
             {
-                for(s32 j = 0; j < BlockDim; ++j)
+                for(s32 j = 0; j < BlockDimX; ++j)
                 {
                     if((Row + i < ny) && (Col + j < ny))
                     {
