@@ -79,45 +79,18 @@ void correlate(int ny, int nx, const float *data, float *result)
     s32 PaddedX = VecDim * VecCount;
 
     f64 *NormData = (f64 *)malloc(ny * PaddedX * sizeof(f64));
-    memset(NormData, 0, ny * PaddedX * sizeof(f64));
-
-    // for(s32 Row = 0; Row < ny; ++Row)
-    // {
-    //     f64 Sum = 0;
-    //     for(s32 Col = 0; Col < PaddedX; ++Col)
-    //     {
-    //         f64 val = (Col < nx) ? data[nx*Row + Col] : 0;
-    //         NormData[PaddedX*Row + Col] = val;
-    //         Sum += val;
-    //     }
-
-    //     f64 Mean = Sum/nx;
-    //     f64 SumSq = 0;
-    //     for(s32 Col = 0; Col < nx; ++Col)
-    //     {
-    //         f64 val = NormData[PaddedX*Row + Col] - Mean;
-    //         NormData[PaddedX*Row + Col] = val;
-    //         SumSq += val*val;
-    //     }
-
-    //     f64 InvStdY = 1/sqrt(SumSq);
-    //     for(s32 Col = 0; Col < nx; ++Col)
-    //     {
-    //         NormData[PaddedX*Row + Col] *= InvStdY;
-    //     }
-    // }
 
     for(s32 Row = 0; Row < ny; ++Row)
     {
-        f64x4 Sum = {};
-        for(s32 Col = 0; Col < nx - 4; Col+=4)
+        f64 Sum = 0;
+        for(s32 Col = 0; Col < PaddedX; ++Col)
         {
-            f64x4 val = load_F32(data + nx*Row + Col);
-            Sum = Sum + val;
-            storeu(NormData + PaddedX*Row + Col, val);
+            f64 val = (Col < nx) ? data[nx*Row + Col] : 0;
+            NormData[PaddedX*Row + Col] = val;
+            Sum += val;
         }
 
-        f64 Mean = hadd(Sum)/nx;
+        f64 Mean = Sum/nx;
         f64 SumSq = 0;
         for(s32 Col = 0; Col < nx; ++Col)
         {
@@ -132,6 +105,7 @@ void correlate(int ny, int nx, const float *data, float *result)
             NormData[PaddedX*Row + Col] *= InvStdY;
         }
     }
+
 
     // the output dim
     for(s32 Row = 0; Row < ny; ++Row)
@@ -152,17 +126,3 @@ void correlate(int ny, int nx, const float *data, float *result)
     }
     free(NormData);
 }
-
-#if 0
-const int nx = 101;
-const int ny = 93;
-const float d[nx*ny] = {};
-float r[ny*ny];
-
-
-int main()
-{
-    correlate(ny, nx, d, r);
-}
-
-#endif
