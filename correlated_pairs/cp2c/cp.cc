@@ -13,36 +13,44 @@ typedef double f64;
 
 #include <x86intrin.h>
 
-typedef __m256d f64x4;
+// typedef __m256d f64x4;
 
 typedef struct
 {
-    __mm256d v;
-};
+    __m256d v;
+} f64x4;
 
 
 f64x4 operator+(f64x4 a, f64x4 b)
 {
-    f64x4 r = _mm256_add_pd(a, b);
+    f64x4 r;
+    r.v = _mm256_add_pd(a.v, b.v);
     return(r);
 }
 
 f64x4 operator*(f64x4 a, f64x4 b)
 {
-    f64x4 r = _mm256_mul_pd(a, b);
+    f64x4 r;
+    r.v = _mm256_mul_pd(a.v, b.v);
     return(r);
 }
 
 f64 hadd(f64x4 a)
 {
-    f64 result;
-    f64 *Scalar = (f64 *)&a;
+    f64 result = 0;
+    f64 *Scalar = (f64 *)&a.v;
     for(u32 i = 0; i < 4; ++i)
     {
         result += Scalar[i];
     }
     return(result);
+}
 
+f64x4 loadu(f64 *a)
+{
+    f64x4 r;
+    r.v = _mm256_loadu_pd(a);
+    return(r);
 }
 
 
@@ -80,7 +88,7 @@ void correlate(int ny, int nx, const float *data, float *result)
         }
     }
 
-    f64x4 *VecNormData = (f64x4 *)NormData;
+    // f64x4 *VecNormData = (f64x4 *)NormData;
 
 
     // the output dim
@@ -89,10 +97,12 @@ void correlate(int ny, int nx, const float *data, float *result)
         for(s32 Col =  Row; Col < ny; ++Col)
         {
             f64x4 DotProds = {};
-            for(s32 VecIdx = 0; VecIdx < VecCount; ++VecIdx)
+            for(s32 VecIdx = 0; VecIdx < PaddedX; VecIdx+=4)
             {
-                f64x4 x = VecNormData[PaddedX*Row + VecIdx];
-                f64x4 y = VecNormData[PaddedX*Col + VecIdx];
+                // f64x4 x = VecNormData[PaddedX*Row + VecIdx];
+                // f64x4 y = VecNormData[PaddedX*Col + VecIdx];
+                f64x4 x = loadu((f64*)(NormData + PaddedX*Row + VecIdx));
+                f64x4 y = loadu((f64*)(NormData + PaddedX*Col + VecIdx));
                 DotProds = DotProds + (x * y);
             }
             f64 FinalSum = hadd(DotProds);
@@ -101,3 +111,17 @@ void correlate(int ny, int nx, const float *data, float *result)
     }
     free(NormData);
 }
+
+#if 0
+const int nx = 101;
+const int ny = 93;
+const float d[nx*ny] = {};
+float r[ny*ny];
+
+
+int main()
+{
+    correlate(ny, nx, d, r);
+}
+
+#endif
