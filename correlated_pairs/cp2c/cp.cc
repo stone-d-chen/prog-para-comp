@@ -97,10 +97,14 @@ void correlate(int ny, int nx, const float *data, float *result)
         for(s32 Col =  Row; Col < ny; ++Col)
         {
             f64x4 DotProds = {};
-            for(s32 VecIdx = 0; VecIdx < PaddedX; VecIdx+=4)
+            // for(s32 VecIdx = 0; VecIdx < VecCount; ++VecIdx)
+            // {
+            //     f64x4 x = loadu((f64*)(VecNormData + VecCount*Row + VecIdx));
+            //     f64x4 y = loadu((f64*)(VecNormData + VecCount*Col + VecIdx));
+            //     DotProds = DotProds + (x * y);
+            // }
+            for(s32 VecIdx = 0; VecIdx < PaddedX; VecIdx += 4)
             {
-                // f64x4 x = VecNormData[PaddedX*Row + VecIdx];
-                // f64x4 y = VecNormData[PaddedX*Col + VecIdx];
                 f64x4 x = loadu((f64*)(NormData + PaddedX*Row + VecIdx));
                 f64x4 y = loadu((f64*)(NormData + PaddedX*Col + VecIdx));
                 DotProds = DotProds + (x * y);

@@ -10,9 +10,15 @@
 
 ## Updates
 
+2023/25/6
+
+-   cp2b omp parallel
+
+-   cp2c was confused why `VecNormData[PaddedX*Row + VecIdx]` wasn't working but the array width now changes to `VecNormData[VecCount*Row + VecIdx]` ...just kidding this actually crashes for some reason? Unaligned loads?
+
 2023/24/6
 
--   OMP parallel version, currently fastest solution, no idea why though...
+-   Mf2 OMP parallel version, currently fastest solution, no idea why though...
 -   cp1, cp2, sequential and ILP, tried ILP on the processing phase, seems to slow things down
 
 2023/23/6
