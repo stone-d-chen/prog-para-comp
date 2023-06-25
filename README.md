@@ -6,10 +6,7 @@
 
 ### Correlated Pairs
 
--   cp3a, major thing is probably ILP so add blocking, maybe 3x3, cache might get kind of nasty though
-
-    -   `loadu((f64)(NormData + PaddedX *(Row + i) + VecIdx)`
-    -   `loadu((f64)(NormData + PaddedX *(Col + j) + VecIdx)`
+-   cp3a, look into blocking
 
 ### Median Filter
 
@@ -21,6 +18,11 @@
 
 2023/25/6
 
+-   cp3a blocking is working but still really slow, the gflops going down suggests I'll have to do some sort of blocking to get this to work
+
+```{=html}
+<!-- -->
+```
 -   cp2b omp parallel
 
 -   cp2c was confused why `VecNormData[PaddedX*Row + VecIdx]` wasn't working but the array width now changes to `VecNormData[VecCount*Row + VecIdx]` ...just kidding this actually crashes for some reason? Unaligned loads?
