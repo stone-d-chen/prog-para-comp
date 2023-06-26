@@ -79,12 +79,54 @@ We can also think of this in a row oriented manner
 So now our new strategy is to load in a single element of the left matrix
 
 ``` cpp
-Result [3][3 vec] is [3][24]
+//EXTEMELY rough sketch
+f64 data[16][4] = 
+{
+    0,1,2,3,
+    4,5,6,7,
+    8,9,10,11,
+    12,13,14,15,
+    0,1,2,3,
+    4,5,6,7,
+    8,9,10,11,
+    12,13,14,15,
+    0,1,2,3,
+    4,5,6,7,
+    8,9,10,11,
+    12,13,14,15,
+    0,1,2,3,
+    4,5,6,7,
+    8,9,10,11,
+    12,13,14,15,
+};
 
-result[x][y]
-Data[x][0] * DataT[0][y:y+24]
+f64 data2[4][16] = 
+{
+    0,1,2,3,4,5,6,7, /*  */   8, 9, 10, 11, 12, 13, 14, 15,
+    0,1,2,3,4,5,6,7, /*  */   8, 9, 10, 11, 12, 13, 14, 15,
+    0,1,2,3,4,5,6,7, /*  */   8, 9, 10, 11, 12, 13, 14, 15,
+    0,1,2,3,4,5,6,7, /*  */   8, 9, 10, 11, 12, 13, 14, 15,
+};
 
+f64 result[16][16] = {};
 
+void kernel(f64* NormData, s32 Row, s32 Col)
+{
+    f64x4 DotProds[2][2] = {}
+
+    for (int k = 0; k < nx; ++k)
+    {
+        f64x4 broadcast = Broadcast(data[0][k])
+
+        f64x4 row0 = loadu(data[k][0:7])
+
+        DotProds[0][0] += broadcast + row0;
+
+        f64x4 row1 = loadu(data[k][8:16])   
+
+        DotProds[0][1] += broadcast + row1;
+    }
+}
 ```
 
 2023/25/6
@@ -111,3 +153,4 @@ Data[x][0] * DataT[0][y:y+24]
     -   QuickSelect, <https://en.wikipedia.org/wiki/Quickselect>
 
 Based on [Jukka Suomela's](https://jukkasuomela.fi/) materials at <https://ppc.cs.aalto.fi/ack/> Creative Commons [**Attribution 4.0 International**](https://creativecommons.org/licenses/by/4.0/) (CC BY 4.0).
+
