@@ -147,19 +147,19 @@ void correlate(int ny, int nx, const float *data, float *result)
         {
             f64x4 DotProds[BlockDimY][BlockDimX] = {};
 
-            for(s32 VecIdx = 0; VecIdx < PaddedX; VecIdx += VecDim)
-            {
-                for(s32 i = 0; i < BlockDimY; ++i)
+                for(s32 VecIdx = 0; VecIdx < PaddedX; VecIdx += VecDim)
                 {
-                    for(s32 j = 0; j < BlockDimX; ++j)
+                    for(s32 i = 0; i < BlockDimY; ++i)
                     {
-                            f64x4 x = loadu((f64*)(NormData + PaddedX*(Row + i) + VecIdx));
-                            f64x4 y = loadu((f64*)(NormData + PaddedX*(Col + j) + VecIdx));
-                            DotProds[i][j] = DotProds[i][j] + (x * y);
+                        for(s32 j = 0; j < BlockDimX; ++j)
+                        {
+                                f64x4 x = loadu((f64*)(NormData + PaddedX*(Row + i) + VecIdx));
+                                f64x4 y = loadu((f64*)(NormData + PaddedX*(Col + j) + VecIdx));
+                                DotProds[i][j] = DotProds[i][j] + (x * y);
+                        }
                     }
+                
                 }
-               
-            }
             
 
             for(s32 i = 0; i < BlockDimY; ++i)
