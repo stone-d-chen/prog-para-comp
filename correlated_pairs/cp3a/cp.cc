@@ -46,6 +46,31 @@ gflops falling off suggests that I'm running into memory issues
 benchmarks/4	5.547588 s	729,324,000,000	131.5
 the input contains 9000 × 9000 pixels, and the output should contain 9000 × 9000 pixels
 
+4) Tried so much stuff but turns out just changing the blocksize did the most
+
+    benchmarks/1.txt                  0.007s  pass
+    benchmarks/2a.txt                 0.081s  pass
+    benchmarks/2b.txt                 0.088s  pass
+    benchmarks/2c.txt                 0.082s  pass
+    benchmarks/2d.txt                 0.088s  pass
+    benchmarks/3.txt                  1.579s  pass
+    benchmarks/4.txt                  6.700s  pass
+
+
+benchmarks/1	0.012291 s	1,004,000,000	81.7
+the input contains 1000 × 1000 pixels, and the output should contain 1000 × 1000 pixels
+benchmarks/2a	0.072724 s	16,016,000,000	220.2
+the input contains 4000 × 1000 pixels, and the output should contain 4000 × 4000 pixels
+benchmarks/2b	0.072820 s	16,016,000,000	219.9
+the input contains 4000 × 1000 pixels, and the output should contain 4000 × 4000 pixels
+benchmarks/2c	0.075655 s	15,991,989,003	211.4
+the input contains 3999 × 999 pixels, and the output should contain 3999 × 3999 pixels
+benchmarks/2d	0.073656 s	16,040,029,005	217.8
+the input contains 4001 × 1001 pixels, and the output should contain 4001 × 4001 pixels
+benchmarks/3	1.102927 s	216,144,000,000	196.0
+the input contains 6000 × 6000 pixels, and the output should contain 6000 × 6000 pixels
+benchmarks/4	4.114093 s	729,324,000,000	177.3
+the input contains 9000 × 9000 pixels, and the output should contain 9000 × 9000 pixels
 
 */
 
@@ -151,10 +176,12 @@ void correlate(int ny, int nx, const float *data, float *result)
     // const s32 VecCountUn = nx / VecDim;
     constexpr s32 LoadDim = 8;
 
-    const s32 BlockDimY = 3;
+    const s32 BlockDimY = 4;
     const s32 BlockDimX = 3;
     s32 BlockCountY = (ny + BlockDimY - 1) / BlockDimY;
-    s32 PaddedY = BlockCountY * BlockDimY; 
+    s32 BlockCountX = (ny + BlockDimX - 1) / BlockDimX;
+    s32 BlockCount = (BlockCountX < BlockCountY) ? BlockCountY : BlockCountX;
+    s32 PaddedY = BlockCount * BlockDimY; 
 
     //aligned vs unaligned doesn't seem to do much
     f64 *NormData = (f64 *)aligned_alloc(sizeof(f64),PaddedY * PaddedX * sizeof(f64));
@@ -218,7 +245,6 @@ void correlate(int ny, int nx, const float *data, float *result)
    u64 EndProc = __rdtsc();
 
 
-    // the output dim
     #pragma omp parallel for schedule(dynamic)
     for(s32 Row = 0; Row < ny; Row+=BlockDimY)
     {
@@ -227,32 +253,25 @@ void correlate(int ny, int nx, const float *data, float *result)
             f64x4 DotProds[BlockDimY][BlockDimX] = {};
 
                 for(s32 VecIdx = 0; VecIdx < PaddedX; VecIdx += VecDim)
-                {
                     for(s32 i = 0; i < BlockDimY; ++i)
-                    {
                         for(s32 j = 0; j < BlockDimX; ++j)
                         {
                                 f64x4 x = loadu((f64*)(NormData + PaddedX*(Row + i) + VecIdx));
                                 f64x4 y = loadu((f64*)(NormData + PaddedX*(Col + j) + VecIdx));
                                 DotProds[i][j] = DotProds[i][j] + (x * y);
                         }
-                    }
-                
-                }
             
 
             for(s32 i = 0; i < BlockDimY; ++i)
-            {
                 for(s32 j = 0; j < BlockDimX; ++j)
-                {
                     if((Row + i < ny) && (Col + j < ny))
-                    {
                         result[ny*(Row + i) + (Col + j)] = hadd(DotProds[i][j]);
-                    }
-                }
-            }
+
         }
     }
+
+
+    
     u64 EndCompute = __rdtsc();
     free(NormData);
 
