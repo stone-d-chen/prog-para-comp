@@ -46,38 +46,6 @@ f64x4 loadu(f64 *a)
     return(r);
 }
 
-
-
-f64 data[16][4] = 
-{
-    0,1,2,3,
-    4,5,6,7,
-    8,9,10,11,
-    12,13,14,15,
-    0,1,2,3,
-    4,5,6,7,
-    8,9,10,11,
-    12,13,14,15,
-    0,1,2,3,
-    4,5,6,7,
-    8,9,10,11,
-    12,13,14,15,
-    0,1,2,3,
-    4,5,6,7,
-    8,9,10,11,
-    12,13,14,15,
-};
-
-f64 data2[4][16] = 
-{
-    0,1,2,3,4,5,6,7, /*  */   8, 9, 10, 11, 12, 13, 14, 15,
-    16, 17, 18, 19, 20, 21, 22, 23, /**/ 24, 25, 26, 27, 28, 29, 30, 31,
-    0,1,2,3,4,5,6,7, /*  */   8, 9, 10, 11, 12, 13, 14, 15,
-    0,1,2,3,4,5,6,7, /*  */   8, 9, 10, 11, 12, 13, 14, 15,
-};
-
-f64 result[16][16] = {};
-
 f64x4 BroadcastF64(f64 *a)
 {
     f64x4 Result;
@@ -85,31 +53,130 @@ f64x4 BroadcastF64(f64 *a)
     return(Result);
 }
 
+f64 LeftMat[16][4] = 
+{
+    0,1,2,3,
+    4,5,6,7,
+    8,9,10,11,
+    12,13,14,15,
+    0,1,2,3,
+    4,5,6,7,
+    8,9,10,11,
+    12,13,14,15,
+    0,1,2,3,
+    4,5,6,7,
+    8,9,10,11,
+    12,13,14,15,
+    0,1,2,3,
+    4,5,6,7,
+    8,9,10,11,
+    12,13,14,15,
+};
 
-void kernel(f64 *LeftMat, f64 *RightMat, s32 Row, s32 Col, s32 kStart, s32 kEnd) // multiple of vecdim
+f64 RightMat[4][16] = 
+{
+    0,1,2,3,4,5,6,7, /*  */   8, 9, 10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23, /**/ 24, 25, 26, 27, 28, 29, 30, 31,
+    0,1,2,3,4,5,6,7, /*  */   8, 9, 10, 11, 12, 13, 14, 15,
+    0,1,2,3,4,5,6,7, /*  */   8, 9, 10, 11, 12, 13, 14, 15,
+};
+
+
+f64 LeftMat2[4][8] =
+{
+    0,1,2,3,4,5,6,7,
+    8,9,10,11,12,13,14,15,
+    16,17,18,19,20,21,22,23,
+//  0,4,0,4,0,4,0,4
+    24,25,26,27,28,29,30,31
+};
+f64 RightMat2[8][4] =
+{
+    0,1,2,3,
+    4,5,6,7,
+    0,1,2,3,
+    4,5,6,7,
+    0,1,2,3,
+    4,5,6,7,
+    0,1,2,3,
+    4,5,6,7,
+    // 8,9,10,11,12,13,14,15,
+    // 16,17,18,19,20,21,22,23,
+    // 24,25,26,27,28,29,30,31
+};
+
+
+f64 LeftMat3[4][4] =
+{
+    0,1,2,4,
+    0,1,2,4,
+    0,1,2,4,
+    0,1,2,4,
+};
+f64 RightMat3[4][4] =
+{
+    0,1,2,4,
+    0,1,2,4,
+    0,1,2,4,
+    0,1,2,4,
+};
+
+f64 result[16][16] = {};
+f64 result2[4][4] = {};
+
+
+
+void kernel(f64 *LeftMat, f64 *RightMat, f64 *Result,
+            s32 Row, s32 Col,
+            s32 kStart, s32 kEnd,
+            s32 dim1, s32 dim2, s32 dim3) // multiple of vecdim
 {
     const s32 VecWidth = 4;
-    f64x4 DotProds[2][2] = {};
+    const s32 OutDim = 3;
+    const s32 ny = 16;
+    const s32 nx = 4;
 
-    for(s32 i = 0; i < 2; ++i)
+    f64x4 DotProds[OutDim][OutDim] = {};
+
+    for (int k = kStart; k < kEnd; ++k)
     {
-
-            for (int k = 0; k < 4; ++k)
+            for(s32 i = 0; i < OutDim; ++i)
             {
-                f64x4 broadcast = BroadcastF64( LeftMat + 4 * (Row + i) + k );
+                f64x4 broadcast = BroadcastF64( LeftMat + dim2 * (Row + i) + k );
 
-                for(s32 j = 0; j < 2; ++j)
+                for(s32 j = 0; j < OutDim; ++j)
                 {
-                    f64x4 row0 = loadu ( RightMat + (16 * k) + (Col + j * 4) );
-                    DotProds[i][j] = DotProds[i][j] + (broadcast + row0);
+                    f64x4 row = loadu ( RightMat + (dim1 * k) + (Col + j * VecWidth) );
+                    DotProds[i][j] = DotProds[i][j] + (broadcast * row);
                 }
             }
     }
+
+    f64 *dp = (f64 *)DotProds;
+    
+    for(s32 i  = 0; i < OutDim; ++i)
+    {
+        for(s32 j = 0; j < VecWidth * OutDim; ++j)
+        {
+            if((Row + i < dim1) && (Col + j < dim3))
+            {
+                Result[dim3 * (Row + i) + Col + j] = dp[VecWidth*OutDim * i + j];
+            }
+        }
+    }
+    
 }
 
 int main()
 {
+    for(int x = 0; x < 4; x += 3)
+        for(int y = 0; y < 16; y+=12)
+            kernel((f64*)LeftMat2, (f64*) RightMat2, (f64 *)result2, x, y, 0, 8, 4, 8, 4  );
 
-    kernel((f64*)data, (f64*) data2, 0, 0, 0, 4 );
+    for(int x = 0; x < 4; x += 3)
+        for(int y = 0; y < 16; y+=12)
+            kernel((f64*)LeftMat3, (f64*) RightMat3, (f64 *)result2, x, y, 0, 4, 4, 4, 4  );
+
+    kernel((f64*)LeftMat, (f64*) RightMat, (f64 *)result, 0, 0, 0, 4, 16, 4, 16 );
 
 }
