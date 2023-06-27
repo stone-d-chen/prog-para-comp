@@ -45,9 +45,9 @@ typedef int s32;
 typedef float f32;
 typedef double f64;
 
-// #include <intrin.h>
 #include <x86intrin.h>
 
+// typedef __m256d f64x4;
 
 typedef struct
 {
@@ -87,58 +87,11 @@ f64x4 loadu(f64 *a)
     return(r);
 }
 
-f64x4 BroadcastF64(f64 *a)
-{
-    f64x4 Result;
-    Result.v = _mm256_broadcast_sd(a);
-    return(Result);
-}
-
-
-void kernel(f64 *LeftMat, f64 *RightMat, f32 *Result,
-            s32 Row, s32 Col,
-            s32 kStart, s32 kEnd,
-            s32 dim1, s32 dim2, s32 dim3, s32 ny) // multiple of vecdim
-{
-    const s32 VecWidth = 4;
-    const s32 OutDim = 3;
-
-    f64x4 DotProds[OutDim][OutDim] = {};
-
-    for (int k = kStart; k < kEnd; ++k)
-    {
-            for(s32 i = 0; i < OutDim; ++i)
-            {
-                f64x4 broadcast = BroadcastF64( LeftMat + dim2 * (Row + i) + k );
-
-                for(s32 j = 0; j < OutDim; ++j)
-                {
-                    f64x4 row = loadu ( RightMat + (dim1 * k) + (Col + j * VecWidth) );
-                    DotProds[i][j] = DotProds[i][j] + (broadcast * row);
-                }
-            }
-    }
-
-    f64 *dp = (f64 *)DotProds;
-    
-    for(s32 i  = 0; i < OutDim; ++i)
-    {
-        for(s32 j = 0; j < VecWidth * OutDim; ++j)
-        {
-            if((Row + i < ny) && (Col + j < ny))
-            {
-                Result[ny * (Row + i) + Col + j] = dp[VecWidth*OutDim * i + j];
-            }
-        }
-    }
-    
-}
-
 
 
 void correlate(int ny, int nx, const float *data, float *result) 
 {
-    const s32 VecDim = 12;
+    const s32 VecDim = 4;
     s32 VecCount = (nx + VecDim - 1) / VecDim;
     s32 PaddedX = VecDim * VecCount;
 
@@ -147,7 +100,7 @@ void correlate(int ny, int nx, const float *data, float *result)
     s32 BlockCountY = (ny + BlockDimY - 1) / BlockDimY;
     s32 PaddedY = BlockCountY * BlockDimY; 
 
-    f64 *NormData = (f64 *)malloc((PaddedY + 1) * PaddedX * sizeof(f64));
+    f64 *NormData = (f64 *)malloc(PaddedY * PaddedX * sizeof(f64));
 
     #pragma omp parallel for
     for(s32 Row = 0; Row < ny; ++Row)
@@ -185,29 +138,10 @@ void correlate(int ny, int nx, const float *data, float *result)
         }
     }
 
-    f64 *NormDataT = (f64*)malloc(PaddedX*(PaddedY + 1) * sizeof(f64));
-    #pragma omp parallel for
-    for(s32 Row = 0; Row < PaddedY; ++Row)
-    {
-        for(s32 Col = 0; Col < PaddedX; ++Col)
-        {
-            NormDataT[PaddedY * Col + Row] = NormData[PaddedX*Row + Col];
-        }
-    }
 
-for(s32 Row = 0; Row < ny; Row+=3)
-{
-    for(s32 Col = Row; Col < ny; Col+=12)
-    {
-        kernel(NormData, NormDataT, result, Row, Col, 0, PaddedX, PaddedY, PaddedX, PaddedY, ny);
-        
-    }
-}
-
-#if 0
     // the output dim
-    #pragma omp parallel for
-    for(s32 Row = 0; Row < ny; Row+=BlockDimY),
+    #pragma omp parallel for nowait
+    for(s32 Row = 0; Row < ny; Row+=BlockDimY)
     {
         for(s32 Col =  Row; Col < ny; Col+=BlockDimX)
         {
@@ -240,24 +174,5 @@ for(s32 Row = 0; Row < ny; Row+=3)
             }
         }
     }
-
-#endif
     free(NormData);
-    free(NormDataT);
 }
-
-
-#if 0
-
-f32 data[2][2] = 
-{
-    -1,1,-1,1
-};
-
-f32 result[2][2];
-
-int main()
-{
-    correlate(2,2,(f32*)data,(f32*)result);
-}
-#endif
