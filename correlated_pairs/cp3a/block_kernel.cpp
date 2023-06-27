@@ -126,27 +126,25 @@ f64 result2[4][4] = {};
 
 
 
-void kernel(f64 *LeftMat, f64 *RightMat, f64 *Result,
+void kernel(f64 *Data, f64 *DataT, f64 *Result,
             s32 Row, s32 Col,
             s32 kStart, s32 kEnd,
             s32 DimInner, s32 DimOuter) // multiple of vecdim
 {
     const s32 VecWidth = 4;
-    const s32 OutDim = 3;
-    const s32 ny = 16;
-    const s32 nx = 4;
+    const s32 OutDim = 2;
 
-    f64x4 DotProds[OutDim][OutDim] = {};
+    f64x4 DotProds[6][OutDim] = {};
 
     for (int k = kStart; k < kEnd; ++k)
     {
-            for(s32 i = 0; i < OutDim; ++i)
+            for(s32 i = 0; i < 6; ++i)
             {
-                f64x4 broadcast = BroadcastF64( LeftMat + DimInner * (Row + i) + k );
+                f64x4 broadcast = BroadcastF64(&Data[DimInner * (Row + i) + k]);
 
                 for(s32 j = 0; j < OutDim; ++j)
                 {
-                    f64x4 row = loadu ( RightMat + (DimOuter * k) + (Col + j * VecWidth) );
+                    f64x4 row = loadu ( &DataT [ (DimOuter * k) + (Col + j * VecWidth) ]);
                     DotProds[i][j] = DotProds[i][j] + (broadcast * row);
                 }
             }
