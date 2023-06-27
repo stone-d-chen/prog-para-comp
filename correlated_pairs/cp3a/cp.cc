@@ -33,12 +33,27 @@ gflops falling off suggests that I'm running into memory issues
     the input contains 6000 × 6000 pixels, and the output should contain 6000 × 6000 pixels
     benchmarks/4	12.329532 s	729,324,000,000	59.2
     the input contains 9000 × 9000 pixels, and the output should contain 9000 × 9000 pixels
+
+3) schedule dynamic ... wow ...
+    benchmarks/1.txt                  0.014s  pass
+    benchmarks/2a.txt                 0.083s  pass
+    benchmarks/2b.txt                 0.079s  pass
+    benchmarks/2c.txt                 0.085s  pass
+    benchmarks/2d.txt                 0.081s  pass
+    benchmarks/3.txt                  1.893s  pass
+    benchmarks/4.txt                  8.297s  pass
+
+benchmarks/4	5.547588 s	729,324,000,000	131.5
+the input contains 9000 × 9000 pixels, and the output should contain 9000 × 9000 pixels
+
+
 */
 
 
 #include <stdlib.h>
 #include <cmath>
 #include <cstring>
+#include <cstdlib>
 
 typedef unsigned int u32;
 typedef int s32;
@@ -100,6 +115,8 @@ void correlate(int ny, int nx, const float *data, float *result)
     s32 BlockCountY = (ny + BlockDimY - 1) / BlockDimY;
     s32 PaddedY = BlockCountY * BlockDimY; 
 
+    //aligned vs unaligned doesn't seem to do much
+    // f64 *NormData = (f64 *)aligned_alloc(sizeof(f64),PaddedY * PaddedX * sizeof(f64));
     f64 *NormData = (f64 *)malloc(PaddedY * PaddedX * sizeof(f64));
 
     #pragma omp parallel for
@@ -140,7 +157,7 @@ void correlate(int ny, int nx, const float *data, float *result)
 
 
     // the output dim
-    #pragma omp parallel for nowait
+    #pragma omp parallel for schedule(dynamic)
     for(s32 Row = 0; Row < ny; Row+=BlockDimY)
     {
         for(s32 Col =  Row; Col < ny; Col+=BlockDimX)
@@ -153,6 +170,9 @@ void correlate(int ny, int nx, const float *data, float *result)
                     {
                         for(s32 j = 0; j < BlockDimX; ++j)
                         {
+                                constexpr int PF = 20;
+                                __builtin_prefetch(&NormData[PaddedX*(Row + i) + VecIdx + PF]);
+                                __builtin_prefetch(&NormData[PaddedX*(Col + i) + VecIdx + PF]);
                                 f64x4 x = loadu((f64*)(NormData + PaddedX*(Row + i) + VecIdx));
                                 f64x4 y = loadu((f64*)(NormData + PaddedX*(Col + j) + VecIdx));
                                 DotProds[i][j] = DotProds[i][j] + (x * y);
