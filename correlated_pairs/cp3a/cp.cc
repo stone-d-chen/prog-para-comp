@@ -69,6 +69,11 @@ typedef struct
     __m256d v;
 } f64x4;
 
+typedef struct
+{
+    __m128 v;
+} f32x4;
+
 
 f64x4 operator+(f64x4 a, f64x4 b)
 {
@@ -101,8 +106,24 @@ f64x4 loadu(f64 *a)
     r.v = _mm256_loadu_pd(a);
     return(r);
 }
+f32x4 loadu(const f32 *a)
+{
+    f32x4 r;
+    r.v = _mm_loadu_ps(a);
+    return(r);
+}
+f64x4 F32x4ToF64x4(f32x4 a)
+{
+    f64x4 r;
+    r.v = _mm256_cvtps_pd(a.v);
+    return(r);
+}
 
 
+void storeu(f64 *a, f64x4 b)
+{
+    _mm256_storeu_pd(a, b.v);
+}
 
 void correlate(int ny, int nx, const float *data, float *result) 
 {
@@ -116,21 +137,37 @@ void correlate(int ny, int nx, const float *data, float *result)
     s32 PaddedY = BlockCountY * BlockDimY; 
 
     //aligned vs unaligned doesn't seem to do much
-    // f64 *NormData = (f64 *)aligned_alloc(sizeof(f64),PaddedY * PaddedX * sizeof(f64));
-    f64 *NormData = (f64 *)malloc(PaddedY * PaddedX * sizeof(f64));
+    f64 *NormData = (f64 *)aligned_alloc(sizeof(f64),PaddedY * PaddedX * sizeof(f64));
+    // f64 *NormData = (f64 *)malloc(PaddedY * PaddedX * sizeof(f64));
 
     #pragma omp parallel for
     for(s32 Row = 0; Row < ny; ++Row)
     {
-        f64 Sum = 0;
-        for(s32 Col = 0; Col < PaddedX; ++Col)
+        // f64 Sum = 0;
+        // for(s32 Col = 0; Col < PaddedX; ++Col)
+        // {
+        //     f64 val = (Col < nx) ? data[nx*Row + Col] : 0;
+        //     NormData[PaddedX*Row + Col] = val;
+        //     Sum += val;
+        // }
+        f64x4 Sum = {};
+        s32 Col = 0;    
+        for(; Col < nx - 4; Col+=4)
+        {
+            f32x4 f32val = loadu(data + nx*Row + Col);
+            f64x4 f64val = F32x4ToF64x4(f32val);
+            Sum = Sum + f64val;
+            storeu(&NormData[PaddedX*Row + Col], f64val);
+        }
+        f64 Mean = hadd(Sum);
+        for(; Col < PaddedX; ++Col)
         {
             f64 val = (Col < nx) ? data[nx*Row + Col] : 0;
             NormData[PaddedX*Row + Col] = val;
-            Sum += val;
+            Mean += val;
         }
+        Mean/=nx;
 
-        f64 Mean = Sum/nx;
         f64 SumSq = 0;
         for(s32 Col = 0; Col < nx; ++Col)
         {
@@ -156,7 +193,6 @@ void correlate(int ny, int nx, const float *data, float *result)
     }
 
 
-    // the output dim
     #pragma omp parallel for schedule(dynamic)
     for(s32 Row = 0; Row < ny; Row+=BlockDimY)
     {
@@ -172,7 +208,7 @@ void correlate(int ny, int nx, const float *data, float *result)
                         {
                                 constexpr int PF = 20;
                                 __builtin_prefetch(&NormData[PaddedX*(Row + i) + VecIdx + PF]);
-                                __builtin_prefetch(&NormData[PaddedX*(Col + i) + VecIdx + PF]);
+                                // __builtin_prefetch(&NormData[PaddedX*(Col + i) + VecIdx + PF]);
                                 f64x4 x = loadu((f64*)(NormData + PaddedX*(Row + i) + VecIdx));
                                 f64x4 y = loadu((f64*)(NormData + PaddedX*(Col + j) + VecIdx));
                                 DotProds[i][j] = DotProds[i][j] + (x * y);
