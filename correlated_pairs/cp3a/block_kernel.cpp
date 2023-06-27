@@ -129,7 +129,7 @@ f64 result2[4][4] = {};
 void kernel(f64 *LeftMat, f64 *RightMat, f64 *Result,
             s32 Row, s32 Col,
             s32 kStart, s32 kEnd,
-            s32 dim1, s32 dim2, s32 dim3) // multiple of vecdim
+            s32 DimInner, s32 DimOuter) // multiple of vecdim
 {
     const s32 VecWidth = 4;
     const s32 OutDim = 3;
@@ -142,11 +142,11 @@ void kernel(f64 *LeftMat, f64 *RightMat, f64 *Result,
     {
             for(s32 i = 0; i < OutDim; ++i)
             {
-                f64x4 broadcast = BroadcastF64( LeftMat + dim2 * (Row + i) + k );
+                f64x4 broadcast = BroadcastF64( LeftMat + DimInner * (Row + i) + k );
 
                 for(s32 j = 0; j < OutDim; ++j)
                 {
-                    f64x4 row = loadu ( RightMat + (dim1 * k) + (Col + j * VecWidth) );
+                    f64x4 row = loadu ( RightMat + (DimOuter * k) + (Col + j * VecWidth) );
                     DotProds[i][j] = DotProds[i][j] + (broadcast * row);
                 }
             }
@@ -158,9 +158,9 @@ void kernel(f64 *LeftMat, f64 *RightMat, f64 *Result,
     {
         for(s32 j = 0; j < VecWidth * OutDim; ++j)
         {
-            if((Row + i < dim1) && (Col + j < dim3))
+            if((Row + i < DimOuter) && (Col + j < DimOuter))
             {
-                Result[dim3 * (Row + i) + Col + j] = dp[VecWidth*OutDim * i + j];
+                Result[DimOuter * (Row + i) + Col + j] = dp[VecWidth*OutDim * i + j];
             }
         }
     }
@@ -171,12 +171,12 @@ int main()
 {
     for(int x = 0; x < 4; x += 3)
         for(int y = 0; y < 16; y+=12)
-            kernel((f64*)LeftMat2, (f64*) RightMat2, (f64 *)result2, x, y, 0, 8, 4, 8, 4  );
+            kernel((f64*)LeftMat2, (f64*) RightMat2, (f64 *)result2, x, y, 0, 8, 4, 8  );
 
     for(int x = 0; x < 4; x += 3)
         for(int y = 0; y < 16; y+=12)
-            kernel((f64*)LeftMat3, (f64*) RightMat3, (f64 *)result2, x, y, 0, 4, 4, 4, 4  );
+            kernel((f64*)LeftMat3, (f64*) RightMat3, (f64 *)result2, x, y, 0, 4, 4, 4  );
 
-    kernel((f64*)LeftMat, (f64*) RightMat, (f64 *)result, 0, 0, 0, 4, 16, 4, 16 );
+    kernel((f64*)LeftMat, (f64*) RightMat, (f64 *)result, 0, 0, 0, 4, 16, 4);
 
 }
