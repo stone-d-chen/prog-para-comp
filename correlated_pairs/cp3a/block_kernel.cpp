@@ -55,8 +55,8 @@ f64x4 BroadcastF64(f64 *a)
 
 f64 LeftMat[16][4] = 
 {
-    0,1,2,3,
-    4,5,6,7,
+    3,2,1,0,
+    7,6,5,4,
     8,9,10,11,
     12,13,14,15,
     0,1,2,3,
@@ -82,6 +82,22 @@ f64 RightMat[4][16] =
 };
 
 
+
+f64 LeftMat3[4][4] =
+{
+    0,1,2,4,
+    0,1,2,4,
+    0,1,2,4,
+    0,1,2,4,
+};
+f64 RightMat3[4][4] =
+{
+    0,1,2,4,
+    0,1,2,4,
+    0,1,2,4,
+    0,1,2,4,
+};
+
 f64 LeftMat2[4][8] =
 {
     0,1,2,3,4,5,6,7,
@@ -105,60 +121,48 @@ f64 RightMat2[8][4] =
     // 24,25,26,27,28,29,30,31
 };
 
-
-f64 LeftMat3[4][4] =
-{
-    0,1,2,4,
-    0,1,2,4,
-    0,1,2,4,
-    0,1,2,4,
-};
-f64 RightMat3[4][4] =
-{
-    0,1,2,4,
-    0,1,2,4,
-    0,1,2,4,
-    0,1,2,4,
-};
-
 f64 result[16][16] = {};
 f64 result2[4][4] = {};
 
 
 
-void kernel(f64 *Data, f64 *DataT, f64 *Result,
+
+
+
+
+void kernel(f64 *DataT, f64 *Result,
             s32 Row, s32 Col,
             s32 kStart, s32 kEnd,
-            s32 DimInner, s32 DimOuter) // multiple of vecdim
+            s32 DimOuter, s32 DimInner) // multiple of vecdim
 {
-    const s32 VecWidth = 4;
-    const s32 OutDim = 2;
+    const u32 Rows = 2;
+    const u32 Cols = 8/4;
+    const u32 VecWidth = 4;
 
-    f64x4 DotProds[6][OutDim] = {};
+    f64x4 DotProds[Rows][2] = {};
 
     for (int k = kStart; k < kEnd; ++k)
-    {
-            for(s32 i = 0; i < 6; ++i)
+        for(s32 i = 0; i < Rows; ++i)
+        {
+            // f64x4 broadcast = BroadcastF64(&Data[DimInner * (Row + i) + k]);
+            f64x4 broadcast = BroadcastF64(&DataT[DimOuter*k + (Row + i)]);
+            for(s32 j = 0; j < Cols; ++j)
             {
-                f64x4 broadcast = BroadcastF64(&Data[DimInner * (Row + i) + k]);
-
-                for(s32 j = 0; j < OutDim; ++j)
-                {
-                    f64x4 row = loadu ( &DataT [ (DimOuter * k) + (Col + j * VecWidth) ]);
-                    DotProds[i][j] = DotProds[i][j] + (broadcast * row);
-                }
+                f64x4 row = loadu ( &DataT [ (DimOuter * k) + (Col + j * VecWidth) ]);
+                DotProds[i][j] = DotProds[i][j] + (broadcast * row);
             }
-    }
+        }
+    
 
     f64 *dp = (f64 *)DotProds;
     
-    for(s32 i  = 0; i < OutDim; ++i)
+    for(s32 i  = 0; i < 6; ++i)
     {
-        for(s32 j = 0; j < VecWidth * OutDim; ++j)
+        for(s32 j = 0; j < 8; ++j)
         {
             if((Row + i < DimOuter) && (Col + j < DimOuter))
             {
-                Result[DimOuter * (Row + i) + Col + j] = dp[VecWidth*OutDim * i + j];
+                Result[DimOuter * (Row + i) + Col + j] = dp[4*2 * i + j];
             }
         }
     }
@@ -167,9 +171,9 @@ void kernel(f64 *Data, f64 *DataT, f64 *Result,
 
 int main()
 {
-    for(int x = 0; x < 4; x += 3)
-        for(int y = 0; y < 16; y+=12)
-            kernel((f64*)LeftMat2, (f64*) RightMat2, (f64 *)result2, x, y, 0, 8, 4, 8  );
+    for(int x = 0; x < 4; x += 2)
+        for(int y = 0; y < 16; y+=8)
+            kernel((f64*)LeftMat2, (f64*) RightMat2, (f64 *)result2, x, y, 0, 1, 4, 8  );
 
     for(int x = 0; x < 4; x += 3)
         for(int y = 0; y < 16; y+=12)

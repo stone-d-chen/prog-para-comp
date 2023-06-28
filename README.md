@@ -6,7 +6,7 @@
 
 ### Correlated Pairs
 
--   cp3a, look into blocking
+-   cp3a, down to 4.1 seconds, need to add avx512 support
 
 ### Median Filter
 
@@ -15,6 +15,28 @@
 -   refactor quicksort into a separate partition function
 
 ## Updates
+
+2023/27/6
+
+-   Okay so turns out that 26/6 stuff was not helpful...I think I figure out why
+
+-   In the mean time it seemed like just tuning the original vector output size to 4x3 or 4x4 was enough to drop to about 4.1 seconds, I also noticed that the test machines have avx512 support soooo probably should try that next
+
+-   So this is the new kernel I tried, notably I did the commented out broadcast first, this had pretty large jumps especially in comparison to my typical way, so I increased register utilization but probably blew out the cache / pre-fetch
+
+    ``` cpp
+        for (int k = kStart; k < kEnd; ++k)
+            for(s32 i = 0; i < Rows; ++i)
+            {
+                // f64x4 broadcast = BroadcastF64(&Data[DimInner * (Row + i) + k]);
+                f64x4 broadcast = BroadcastF64(&DataT[DimOuter*k + (Row + i)]);
+                for(s32 j = 0; j < Cols; ++j)
+                {
+                    f64x4 row = loadu ( &DataT [ (DimOuter * k) + (Col + j * VecWidth) ]);
+                    DotProds[i][j] = DotProds[i][j] + (broadcast * row);
+                }
+            }
+    ```
 
 2023/26/6
 
