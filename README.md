@@ -16,6 +16,10 @@
 
 ## Updates
 
+2023/29/6
+
+-   Turns out the test machines have avx512 support, which only helps a tiny bit (2c) due to memory constraints still
+
 2023/27/6
 
 -   Okay so turns out that 26/6 stuff was not helpful...I think I figure out why

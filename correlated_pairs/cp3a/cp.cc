@@ -72,6 +72,24 @@ the input contains 6000 × 6000 pixels, and the output should contain 6000 × 60
 benchmarks/4	4.114093 s	729,324,000,000	177.3
 the input contains 9000 × 9000 pixels, and the output should contain 9000 × 9000 pixels
 
+5) avx512 support 3.6 seconds 
+Benchmark	Time	Operations	GFLOPS
+benchmarks/1	0.013855 s	1,004,000,000	72.5
+the input contains 1000 × 1000 pixels, and the output should contain 1000 × 1000 pixels
+benchmarks/2a	0.076841 s	16,016,000,000	208.4
+the input contains 4000 × 1000 pixels, and the output should contain 4000 × 4000 pixels
+benchmarks/2b	0.075714 s	16,016,000,000	211.5
+the input contains 4000 × 1000 pixels, and the output should contain 4000 × 4000 pixels
+benchmarks/2c	0.077098 s	15,991,989,003	207.4
+the input contains 3999 × 999 pixels, and the output should contain 3999 × 3999 pixels
+benchmarks/2d	0.079373 s	16,040,029,005	202.1
+the input contains 4001 × 1001 pixels, and the output should contain 4001 × 4001 pixels
+benchmarks/3	0.904894 s	216,144,000,000	238.9
+the input contains 6000 × 6000 pixels, and the output should contain 6000 × 6000 pixels
+benchmarks/4	3.612383 s	729,324,000,000	201.9
+the input contains 9000 × 9000 pixels, and the output should contain 9000 × 9000 pixels
+
+
 */
 
 
@@ -89,94 +107,77 @@ typedef unsigned long long u64;
 
 #include <x86intrin.h>
 
-// typedef __m256d f64x4;
-
 typedef struct
 {
-    __m256d v;
-} f64x4;
-
+    __m512d v;
+} f64x8;
 typedef struct
 {
-    __m128 v;
-} f32x4;
+    __m256 v;
+} f32x8;
 
-
-f64x4 operator+(f64x4 a, f64x4 b)
+f64x8 operator+(f64x8 a, f64x8 b)
 {
-    f64x4 r;
-    r.v = _mm256_add_pd(a.v, b.v);
+    f64x8 r;
+    r.v = _mm512_add_pd(a.v, b.v);
     return(r);
 }
-f64x4 operator-(f64x4 a, f64x4 b)
+f64x8 operator-(f64x8 a, f64x8 b)
 {
-    f64x4 r;
-    r.v = _mm256_sub_pd(a.v, b.v);
+    f64x8 r;
+    r.v = _mm512_sub_pd(a.v, b.v);
     return(r);
 }
-
-f64x4 operator*(f64x4 a, f64x4 b)
+f64x8 operator*(f64x8 a, f64x8 b)
 {
-    f64x4 r;
-    r.v = _mm256_mul_pd(a.v, b.v);
+    f64x8 r;
+    r.v = _mm512_mul_pd(a.v, b.v);
     return(r);
 }
-
-f64 hadd(f64x4 a)
+f64 hadd(f64x8 a)
 {
     f64 result = 0;
     f64 *Scalar = (f64 *)&a.v;
-    for(u32 i = 0; i < 4; ++i)
+    for(u32 i = 0; i < 8; ++i)
     {
         result += Scalar[i];
     }
     return(result);
 }
 
-f64x4 loadu(f64 *a)
+f64x8 loadu(const f64 *a)
 {
-    f64x4 r;
-    r.v = _mm256_loadu_pd(a);
+    f64x8 r;
+    r.v = _mm512_loadu_pd(a);
     return(r);
 }
+// f32x8 loaduF32x8(const f32 *a)
+// {
+//     f32x8 r;
+//     r.v = _mm256_loadu_ps(a);
+//     return(r);
+// }
+// f64x8 F32x8ToF64x8(f32x8 a)
+// {
+//     f64x8 r;
+//     r.v = _mm512_cvtps_pd(a.v);
+//     return(r);
+// }
 
-f32x4 loadu(const f32 *a)
-{
-    f32x4 r;
-    r.v = _mm_loadu_ps(a);
-    return(r);
-}
-f64x4 F32x4ToF64x4(f32x4 a)
-{
-    f64x4 r;
-    r.v = _mm256_cvtps_pd(a.v);
-    return(r);
-}
 
-
-void storeu(f64 *a, f64x4 b)
+void storeu(f64 *a, f64x8 b)
 {
-    _mm256_storeu_pd(a, b.v);
-}
-
-f64x4 BroadcastF64(const f64 *a)
-{
-    f64x4 Result;
-    Result.v = _mm256_broadcast_sd(a);
-    return(Result);
+    _mm512_storeu_pd(a, b.v);
 }
 
 
 void correlate(int ny, int nx, const float *data, float *result) 
 {
-    constexpr s32 VecDim = 4;
+    constexpr s32 VecDim = 8;
     const s32 VecCount = (nx + VecDim - 1) / VecDim;
     const s32 PaddedX = VecDim * VecCount;
 
-    // const s32 VecCountUn = nx / VecDim;
-    constexpr s32 LoadDim = 8;
-
-    const s32 BlockDimY = 4;
+    const s32 BlockDimY = 3;
     const s32 BlockDimX = 3;
     s32 BlockCountY = (ny + BlockDimY - 1) / BlockDimY;
     s32 BlockCountX = (ny + BlockDimX - 1) / BlockDimX;
@@ -193,31 +194,17 @@ void correlate(int ny, int nx, const float *data, float *result)
     #pragma omp parallel for schedule(dynamic)
     for(s32 Row = 0; Row < ny; ++Row)
     {
-        f64x4 LaneSum[LoadDim] = {};
-        s32 Col = 0;
-        for(; Col < nx-(LoadDim*VecDim); Col+=(LoadDim*VecDim))
-        {
-            for(s32 Item = 0; Item < LoadDim; ++Item)
-            {
-                f64x4 f64Val = F32x4ToF64x4(loadu(&data[nx*Row + Col + Item*VecDim]));
-                storeu(&NormData[PaddedX*Row + Col + Item*VecDim], f64Val);
-                LaneSum[Item] = LaneSum[Item] + f64Val;
-            }
-        }
-        f64x4 Sum2 = {};
-        for(s32 Item = 0; Item < LoadDim; ++Item)
-            Sum2 = Sum2 + LaneSum[Item];
-        f64 Sum = hadd(Sum2);
-
-        for(; Col < nx; ++Col)
+        f64 Sum = 0;
+        ;
+        for(s32 Col = 0; Col < nx; ++Col)
         {
             f64 val = data[nx*Row + Col];
             NormData[PaddedX*Row + Col] = val;
             Sum += val;
         }
-
         for(s32 Col = nx; Col < PaddedX; ++Col)
             NormData[PaddedX*Row + Col] = 0;
+
 
         f64 Mean = Sum/nx;
         f64 SumSq = 0;
@@ -250,14 +237,14 @@ void correlate(int ny, int nx, const float *data, float *result)
     {
         for(s32 Col =  Row; Col < ny; Col+=BlockDimX)
         {
-            f64x4 DotProds[BlockDimY][BlockDimX] = {};
+            f64x8 DotProds[BlockDimY][BlockDimX] = {};
 
                 for(s32 VecIdx = 0; VecIdx < PaddedX; VecIdx += VecDim)
                     for(s32 i = 0; i < BlockDimY; ++i)
                         for(s32 j = 0; j < BlockDimX; ++j)
                         {
-                                f64x4 x = loadu((f64*)(NormData + PaddedX*(Row + i) + VecIdx));
-                                f64x4 y = loadu((f64*)(NormData + PaddedX*(Col + j) + VecIdx));
+                                f64x8 x = loadu((f64*)(NormData + PaddedX*(Row + i) + VecIdx));
+                                f64x8 y = loadu((f64*)(NormData + PaddedX*(Col + j) + VecIdx));
                                 DotProds[i][j] = DotProds[i][j] + (x * y);
                         }
             
