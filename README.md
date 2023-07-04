@@ -6,7 +6,7 @@
 
 ### Correlated Pairs
 
--   cp3a, down to 4.1 seconds, need to add avx512 support
+-   cp3a, down to 3.5 seconds, need to add avx512 support
 
 ### Median Filter
 
@@ -16,11 +16,19 @@
 
 ## Updates
 
+2023/04/7
+
+-   Back to avx2 but using more register re-use solidly puts me at #3 but still not below \<3 seconds
+
+-   I can maybe get down to \< 3.0 with avx512 but it's a huge pain not being able to develop locally (...do I get a avx512 cpu just for this???? )
+
+-   ![](images/paste-CC1AE9E6.png)
+
+-   ![](images/paste-64390876.png)
+
 2023/03/7
 
 -   Add avx512 support, huge pain since I don't have an avx512 cpu, shaved off 10% of time. Had a problem with unitialized variable warnings which the compiler is set to treat as an error, in the cvtps_pd instructions
-
--   Next step is to try and get more register re-use by loading a column of data and using permutations
 
 2023/29/6
 
