@@ -16,6 +16,10 @@
 
 ## Updates
 
+2023/03/7
+
+-   Add avx512 support, huge pain since I don't have an avx512 cpu, shaved off 10% of time. Had a problem with unitialized variable warnings which the compiler is set to treat as an error, in the cvtps_pd instructions
+
 2023/29/6
 
 -   Turns out the test machines have avx512 support, which only helps a tiny bit (2c) due to memory constraints still

@@ -107,77 +107,93 @@ typedef unsigned long long u64;
 
 #include <x86intrin.h>
 
-typedef struct
-{
-    __m512d v;
-} f64x8;
-typedef struct
-{
-    __m256 v;
-} f32x8;
+// typedef __m256d f64x4;
 
-f64x8 operator+(f64x8 a, f64x8 b)
+typedef struct
 {
-    f64x8 r;
-    r.v = _mm512_add_pd(a.v, b.v);
+    __m256d v;
+} f64x4;
+
+typedef struct
+{
+    __m128 v;
+} f32x4;
+
+
+f64x4 operator+(f64x4 a, f64x4 b)
+{
+    f64x4 r;
+    r.v = _mm256_add_pd(a.v, b.v);
     return(r);
 }
-f64x8 operator-(f64x8 a, f64x8 b)
+f64x4 operator-(f64x4 a, f64x4 b)
 {
-    f64x8 r;
-    r.v = _mm512_sub_pd(a.v, b.v);
+    f64x4 r;
+    r.v = _mm256_sub_pd(a.v, b.v);
     return(r);
 }
-f64x8 operator*(f64x8 a, f64x8 b)
+
+f64x4 operator*(f64x4 a, f64x4 b)
 {
-    f64x8 r;
-    r.v = _mm512_mul_pd(a.v, b.v);
+    f64x4 r;
+    r.v = _mm256_mul_pd(a.v, b.v);
     return(r);
 }
-f64 hadd(f64x8 a)
+
+f64 hadd(f64x4 a)
 {
     f64 result = 0;
     f64 *Scalar = (f64 *)&a.v;
-    for(u32 i = 0; i < 8; ++i)
+    for(u32 i = 0; i < 4; ++i)
     {
         result += Scalar[i];
     }
     return(result);
 }
 
-f64x8 loadu(const f64 *a)
+f64x4 loadu(f64 *a)
 {
-    f64x8 r;
-    r.v = _mm512_loadu_pd(a);
+    f64x4 r;
+    r.v = _mm256_loadu_pd(a);
     return(r);
 }
-// f32x8 loaduF32x8(const f32 *a)
-// {
-//     f32x8 r;
-//     r.v = _mm256_loadu_ps(a);
-//     return(r);
-// }
-// f64x8 F32x8ToF64x8(f32x8 a)
-// {
-//     f64x8 r;
-//     r.v = _mm512_cvtps_pd(a.v);
-//     return(r);
-// }
 
-
-void storeu(f64 *a, f64x8 b)
+f32x4 loadu(const f32 *a)
 {
-    _mm512_storeu_pd(a, b.v);
+    f32x4 r;
+    r.v = _mm_loadu_ps(a);
+    return(r);
+}
+f64x4 F32x4ToF64x4(f32x4 a)
+{
+    f64x4 r;
+    r.v = _mm256_cvtps_pd(a.v);
+    return(r);
+}
+
+
+void storeu(f64 *a, f64x4 b)
+{
+    _mm256_storeu_pd(a, b.v);
+}
+
+f64x4 BroadcastF64(const f64 *a)
+{
+    f64x4 Result;
+    Result.v = _mm256_broadcast_sd(a);
+    return(Result);
 }
 
 
 void correlate(int ny, int nx, const float *data, float *result) 
 {
-    constexpr s32 VecDim = 8;
+    constexpr s32 VecDim = 4;
     const s32 VecCount = (nx + VecDim - 1) / VecDim;
     const s32 PaddedX = VecDim * VecCount;
 
-    const s32 BlockDimY = 3;
+    // const s32 VecCountUn = nx / VecDim;
+
+    const s32 BlockDimY = 4;
     const s32 BlockDimX = 3;
     s32 BlockCountY = (ny + BlockDimY - 1) / BlockDimY;
     s32 BlockCountX = (ny + BlockDimX - 1) / BlockDimX;
@@ -195,16 +211,16 @@ void correlate(int ny, int nx, const float *data, float *result)
     for(s32 Row = 0; Row < ny; ++Row)
     {
         f64 Sum = 0;
-        ;
-        for(s32 Col = 0; Col < nx; ++Col)
+        for (s32 Col = 0; Col < nx; ++Col)
         {
-            f64 val = data[nx*Row + Col];
-            NormData[PaddedX*Row + Col] = val;
+            f64 val = data[nx * Row + Col];
+            NormData[PaddedX * Row + Col] = val;
             Sum += val;
         }
-        for(s32 Col = nx; Col < PaddedX; ++Col)
-            NormData[PaddedX*Row + Col] = 0;
-
+        for (s32 Col = nx; Col < PaddedX; ++Col)
+        {
+            NormData[PaddedX * Row + Col] = 0;
+        }
 
         f64 Mean = Sum/nx;
         f64 SumSq = 0;
@@ -223,13 +239,25 @@ void correlate(int ny, int nx, const float *data, float *result)
     }
     #pragma omp parallel for
     for(s32 Row = ny; Row < PaddedY; ++Row)
-    {
         for(s32 Col = 0; Col < PaddedX; ++Col)
-        {
             NormData[PaddedX*Row + Col] = 0;
+
+   u64 EndProc = __rdtsc();
+
+   f64 *NormDataT = (f64 *)malloc(sizeof(f64) * PaddedX * PaddedY);
+   for(s32 Row = 0; Row < PaddedY; ++Row)
+    for(s32 Col = 0; Col < PaddedX; ++Col)
+        NormDataT[PaddedY*Col + Row] = NormData[PaddedX*Row + Col];
+
+    for(s32 Row = 0; Row < ny; Row += 4)
+    {
+        for(s32 Col = 0; Col < ny; Col += 4)
+        {
+            f64x4 x = loadu((f64*)(NormDataT + PaddedX*Row));
+            f64x4 y = loadu((f64*)(NormDataT + PaddedX*Col));
+            
         }
     }
-   u64 EndProc = __rdtsc();
 
 
     #pragma omp parallel for schedule(dynamic)
@@ -237,14 +265,14 @@ void correlate(int ny, int nx, const float *data, float *result)
     {
         for(s32 Col =  Row; Col < ny; Col+=BlockDimX)
         {
-            f64x8 DotProds[BlockDimY][BlockDimX] = {};
+            f64x4 DotProds[BlockDimY][BlockDimX] = {};
 
                 for(s32 VecIdx = 0; VecIdx < PaddedX; VecIdx += VecDim)
                     for(s32 i = 0; i < BlockDimY; ++i)
                         for(s32 j = 0; j < BlockDimX; ++j)
                         {
-                                f64x8 x = loadu((f64*)(NormData + PaddedX*(Row + i) + VecIdx));
-                                f64x8 y = loadu((f64*)(NormData + PaddedX*(Col + j) + VecIdx));
+                                f64x4 x = loadu((f64*)(NormData + PaddedX*(Row + i) + VecIdx));
+                                f64x4 y = loadu((f64*)(NormData + PaddedX*(Col + j) + VecIdx));
                                 DotProds[i][j] = DotProds[i][j] + (x * y);
                         }
             
@@ -261,6 +289,7 @@ void correlate(int ny, int nx, const float *data, float *result)
     
     u64 EndCompute = __rdtsc();
     free(NormData);
+    free(NormDataT);
 
     u64 TotalTime = EndCompute - StartTime;
     u64 PreTime = EndProc - StartTime;
