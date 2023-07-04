@@ -171,7 +171,6 @@ f64x4 F32x4ToF64x4(f32x4 a)
     return(r);
 }
 
-
 void storeu(f64 *a, f64x4 b)
 {
     _mm256_storeu_pd(a, b.v);
@@ -183,6 +182,10 @@ f64x4 BroadcastF64(const f64 *a)
     Result.v = _mm256_broadcast_sd(a);
     return(Result);
 }
+
+
+
+
 
 
 void correlate(int ny, int nx, const float *data, float *result) 
@@ -245,9 +248,14 @@ void correlate(int ny, int nx, const float *data, float *result)
    u64 EndProc = __rdtsc();
 
    f64 *NormDataT = (f64 *)malloc(sizeof(f64) * PaddedX * PaddedY);
-   for(s32 Row = 0; Row < PaddedY; ++Row)
-    for(s32 Col = 0; Col < PaddedX; ++Col)
-        NormDataT[PaddedY*Col + Row] = NormData[PaddedX*Row + Col];
+   for (s32 Row = 0; Row < PaddedY; ++Row)
+   {
+       for (s32 Col = 0; Col < PaddedX; ++Col)
+       {
+           NormDataT[PaddedY * Col + Row] = NormData[PaddedX * Row + Col];
+       }
+   }
+
 
     for(s32 Row = 0; Row < ny; Row += 4)
     {
@@ -255,7 +263,7 @@ void correlate(int ny, int nx, const float *data, float *result)
         {
             f64x4 x = loadu((f64*)(NormDataT + PaddedX*Row));
             f64x4 y = loadu((f64*)(NormDataT + PaddedX*Col));
-            
+
         }
     }
 
