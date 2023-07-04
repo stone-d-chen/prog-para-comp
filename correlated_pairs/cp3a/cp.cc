@@ -1,3 +1,22 @@
+/*
+    benchmarks/1	0.014830 s	1,004,000,000	67.7
+    the input contains 1000 × 1000 pixels, and the output should contain 1000 × 1000 pixels
+    benchmarks/2a	0.083172 s	16,016,000,000	192.6
+    the input contains 4000 × 1000 pixels, and the output should contain 4000 × 4000 pixels
+    benchmarks/2b	0.082476 s	16,016,000,000	194.2
+    the input contains 4000 × 1000 pixels, and the output should contain 4000 × 4000 pixels
+    benchmarks/2c	0.082644 s	15,991,989,003	193.5
+    the input contains 3999 × 999 pixels, and the output should contain 3999 × 3999 pixels
+    benchmarks/2d	0.080875 s	16,040,029,005	198.3
+    the input contains 4001 × 1001 pixels, and the output should contain 4001 × 4001 pixels
+    benchmarks/3	1.094466 s	216,144,000,000	197.5
+    the input contains 6000 × 6000 pixels, and the output should contain 6000 × 6000 pixels
+    benchmarks/4	3.530702 s	729,324,000,000	206.6
+    the input contains 9000 × 9000 pixels, and the output should contain 9000 × 9000 pixels
+
+
+*/
+
 #include <stdlib.h>
 #include <cmath>
 #include <cstring>
@@ -187,8 +206,6 @@ void correlate(int ny, int nx, const float *data, float *result)
 
 
     }
-
-
     
     u64 EndCompute = __rdtsc();
     free(NormData);
