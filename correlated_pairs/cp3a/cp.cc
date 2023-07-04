@@ -45,17 +45,6 @@ inline f64x4 operator*(f64x4 a, f64x4 b)
     return(r);
 }
 
-inline f64 hadd(f64x4 a)
-{
-    f64 result = 0;
-    f64 *Scalar = (f64 *)&a.v;
-    for(u32 i = 0; i < 4; ++i)
-    {
-        result += Scalar[i];
-    }
-    return(result);
-}
-
 inline f64x4 loadu(f64 *a)
 {
     f64x4 r;
@@ -63,31 +52,6 @@ inline f64x4 loadu(f64 *a)
     return(r);
 }
 
-f32x4 loadu(const f32 *a)
-{
-    f32x4 r;
-    r.v = _mm_loadu_ps(a);
-    return(r);
-}
-f64x4 F32x4ToF64x4(f32x4 a)
-{
-    f64x4 r;
-    r.v = _mm256_cvtps_pd(a.v);
-    return(r);
-}
-
-
-void storeu(f64 *a, f64x4 b)
-{
-    _mm256_storeu_pd(a, b.v);
-}
-
-f64x4 BroadcastF64(const f64 *a)
-{
-    f64x4 Result;
-    Result.v = _mm256_broadcast_sd(a);
-    return(Result);
-}
 
 inline f64x4 swap2(f64x4 a)
 {

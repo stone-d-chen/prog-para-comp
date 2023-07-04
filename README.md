@@ -20,6 +20,8 @@
 
 -   Back to avx2 but using more register re-use solidly puts me at #3 but still not below \<3 seconds
 
+-   I can maybe get down to \< 3.0 with avx512 but it's a huge pain not being able to develop locally (...do I get a avx512 cpu just for this???? )
+
 -   ![](images/paste-CC1AE9E6.png)
 
 -   ![](images/paste-64390876.png)
