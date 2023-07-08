@@ -193,11 +193,11 @@ void correlate(int ny, int nx, const float *data, float *result)
                     vv111 = vv111 + a110 * b001;
             }
 
-            lane_f32 vv[LANE_WIDTH] = { vv000, vv001, vv010, vv011, vv100, vv101, vv110, vv111 };
             vv001 = swap1(vv001);
             vv011 = swap1(vv011);
             vv101 = swap1(vv101);
             vv111 = swap1(vv111);
+            lane_f32 vv[LANE_WIDTH] = { vv000, vv001, vv010, vv011, vv100, vv101, vv110, vv111 };
 
 
             for (s32 jb = 0; jb < VecDim; ++jb) {
