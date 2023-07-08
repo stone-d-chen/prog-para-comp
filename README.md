@@ -20,6 +20,12 @@ AVX512 permute instructions
 
 ## Updates
 
+2023/08/7
+
+-   Implement float version, the fastest time! and less than 1.5; shook at 92 lines of code, 1.14, who are you rv?
+
+![](images/paste-7C57E8B0.png)
+
 2023/04/7
 
 -   Back to avx2 but using more register re-use solidly puts me at #3 but still not below \<3 seconds

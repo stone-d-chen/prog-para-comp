@@ -1,3 +1,25 @@
+/*
+
+Currently #1 !!
+
+    benchmarks/1	0.006440 s	1,004,000,000	155.9
+    the input contains 1000 × 1000 pixels, and the output should contain 1000 × 1000 pixels
+    benchmarks/2a	0.033063 s	16,016,000,000	484.4
+    the input contains 4000 × 1000 pixels, and the output should contain 4000 × 4000 pixels
+    benchmarks/2b	0.032887 s	16,016,000,000	487.0
+    the input contains 4000 × 1000 pixels, and the output should contain 4000 × 4000 pixels
+    benchmarks/2c	0.036494 s	15,991,989,003	438.2
+    the input contains 3999 × 999 pixels, and the output should contain 3999 × 3999 pixels
+    benchmarks/2d	0.037281 s	16,040,029,005	430.3
+    the input contains 4001 × 1001 pixels, and the output should contain 4001 × 4001 pixels
+    benchmarks/3	0.340960 s	216,144,000,000	633.9
+    the input contains 6000 × 6000 pixels, and the output should contain 6000 × 6000 pixels
+    benchmarks/4	1.108476 s	729,324,000,000	658.0
+    the input contains 9000 × 9000 pixels, and the output should contain 9000 × 9000 pixels
+
+
+*/
+
 
 #include <stdlib.h>
 #include <cmath>
