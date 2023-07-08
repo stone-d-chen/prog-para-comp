@@ -34,7 +34,7 @@ AVX512 permute instructions
 
 -   ![](images/paste-CC1AE9E6.png)
 
--   ![](images/paste-64390876.png)
+-   ![](images/paste-12ACAFE2.png)
 
 2023/03/7
 
