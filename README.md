@@ -8,6 +8,10 @@
 
 -   cp3a, down to 3.5 seconds, need to add avx512 support
 
+AVX512 permute instructions
+
+-   `__m512d _mm512_permutexvar_pd (__m512i idx, __m512d a)`
+
 ### Median Filter
 
 -   Hand rolled, median of medians

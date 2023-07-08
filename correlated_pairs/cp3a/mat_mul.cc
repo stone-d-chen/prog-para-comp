@@ -109,7 +109,7 @@ void correlate(int ny, int nx, const float *data, float *result)
     s32 VecCount = (ny + VecDim - 1) / VecDim;
     s32 PaddedY = VecCount*VecDim;
 
-    f64x4 *NormData  = (f64x4 *)malloc(VecCount * nx * sizeof(f64));
+    f64x4 *NormData  = (f64x4 *)malloc(VecCount * nx * sizeof(f64x4));
 
     for(s32 Row = 0; Row < VecCount; ++Row)
     {
