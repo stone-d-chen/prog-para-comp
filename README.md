@@ -184,6 +184,7 @@ void kernel(f64* NormData, s32 Row, s32 Col)
 2023/25/6
 
 -   cp3a blocking is working but still really slow, the gflops going down suggests I'll have to do some sort of blocking to get this to work
+-   ![](images/paste-F899A8B0.png)
 -   cp2b omp parallel
 -   cp2c was confused why `VecNormData[PaddedX*Row + VecIdx]` wasn't working but the array width now changes to `VecNormData[VecCount*Row + VecIdx]` ...just kidding this actually crashes for some reason? Unaligned loads?
 

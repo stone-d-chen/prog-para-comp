@@ -81,20 +81,16 @@ f64x8 operator*(f64x8 a, f64x8 b)
     return(r);
 }
 
-// f64 hadd(f64x8 a)
-// {
-//     f64 Result = _mm512_reduce_add_pd(a.v);
-//     return(Result);
-// }
-
-
-inline f64 horizontal_add(f64x8 a){
-    __m256d b = _mm256_add_pd(_mm512_castpd512_pd256(a.v), _mm512_extractf64x4_pd(a.v,1));
-    __m128d d = _mm_add_pd(_mm256_castpd256_pd128(b), _mm256_extractf128_pd(b,1));
-    double *f = (double*)&d;
-    return _mm_cvtsd_f64(d) + f[1];
+f64 hadd(f64x8 a)
+{
+    f64 result = 0;
+    f64 *Scalar = (f64 *)&a.v;
+    for(u32 i = 0; i < 8; ++i)
+    {
+        result += Scalar[i];
+    }
+    return(result);
 }
-
 f64x8 loadu(f64 *a)
 {
     f64x8 r;
@@ -175,7 +171,7 @@ void correlate(int ny, int nx, const float *data, float *result)
                 f64x8 y = loadu((f64*)(NormData + PaddedX*Col + VecIdx));
                 DotProds = DotProds + (x * y);
             }
-            f64 FinalSum = horizontal_add(DotProds);
+            f64 FinalSum = hadd(DotProds);
             result[ny*Row + Col] = FinalSum;
         }
     }
