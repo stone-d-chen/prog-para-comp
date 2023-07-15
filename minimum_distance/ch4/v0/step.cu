@@ -1,3 +1,12 @@
+#include <cstdlib>
+#include <iostream>
+#include <cuda_runtime.h>
+
+int divup(int n, int factor) {
+    int Result = (n + factor - 1) / factor;
+    return(Result);
+}
+
 void step(float* r, const float* d, int n) {
   for(int i = 0; i < n; ++i)
   {
@@ -37,10 +46,10 @@ void mykernel(float *r, float *d, int n)
 
     int v = HUGE_VALF;
 
-    for(k = 0; k < n; ++k)
+    for(int k = 0; k < n; ++k)
     {
-        float x = d[n*i + k];
-        float y = d[n*k + j];
+        float x = d[n*j + k]; // warp is (0, 0) ... (0,15), (1,0), ... (1,15)
+        float y = d[n*k + i];
         v = min(v, x + y);
     }
     r[n*i + j] = v;
