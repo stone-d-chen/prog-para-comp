@@ -7,6 +7,7 @@ This is the function you need to implement. Quick reference:
 - only parts with 0 <= j <= i < ny need to be filled
 */
 
+#include <iostream>
 #include <cuda_runtime.h>
 
 typedef float f32;
@@ -18,13 +19,13 @@ __global__ void kernel(int ny, int nx, const float *data, float *result)
 
     if(i >= ny || j >= ny) return;
 
-    f32 v = 0;
+    double v = 0;
     for(int k = 0; k < nx; ++k)
     {
         v += data[nx*i + k] * data[nx * j + k];
     }
 
-    result[ny * i + j] = v;
+    result[ny * j + i] = float(v);
 }
 
 int divup(int n, int factor) {
@@ -57,25 +58,23 @@ void correlate(int ny, int nx, const float *data, float *result)
         f32 InvStd = 1/sqrtf(SumSq);
 
         for(int x = 0; x < nx; ++x)
-        {
             NormData[nx*y + x] *= InvStd;
-        }
     }
 
-    f32 Result = 0;
-    for(int j = 0; j < ny; ++j)
-    {
-        for(int i = j; i < ny; ++i)
-        {
-            for(int k = 0; k < nx; ++k)
-            {
-                f32 x = NormData[nx*i + k];
-                f32 y = NormData[nx*j + k];
-                Result += x * y;
-            }
-            result[ny*j + i] = Result;
-        }
-    }
+    // f32 Result = 0;
+    // for(int j = 0; j < ny; ++j)
+    // {
+    //     for(int i = j; i < ny; ++i)
+    //     {
+    //         for(int k = 0; k < nx; ++k)
+    //         {
+    //             f32 x = NormData[nx*i + k];
+    //             f32 y = NormData[nx*j + k];
+    //             Result += x * y;
+    //         }
+    //         result[ny*j + i] = Result;
+    //     }
+    // }
 
     dim3 dimBlock(16,16);
     dim3 dimGrid(divup(nx, 16), divup(ny, 16));
@@ -86,9 +85,9 @@ void correlate(int ny, int nx, const float *data, float *result)
    cudaMalloc((void**)&dataGPU, sizeof(f32) * ny * nx);
    cudaMalloc((void**)&resultGPU, sizeof(f32) * ny * ny);
 
-   cudaMemcpy(dataGPU, data, sizeof(f32) * ny * nx, cudaMemcpyHostToDevice);
+   cudaMemcpy(dataGPU, NormData, sizeof(f32) * ny * nx, cudaMemcpyHostToDevice);
 
-   kernel <<< dimGrid, dimBlock >>>(nx, ny, dataGPU, resultGPU);
+   kernel <<< dimGrid, dimBlock >>>(ny, nx, dataGPU, resultGPU);
 
    cudaDeviceSynchronize();
 
@@ -97,4 +96,22 @@ void correlate(int ny, int nx, const float *data, float *result)
    cudaFree(dataGPU);
    cudaFree(resultGPU);
 
+}
+
+
+const float test[] = {0.81472367,0.90579194,0.45150527,0.49610928};
+float res[4];
+
+int main()
+{
+    int ny = 2;
+    int nx = 2;
+    correlate(ny, nx, test,res);
+
+    for (int i = 0; i < ny; ++i) {
+        for (int j = 0; j < nx; ++j) {
+            std::cout << res[i*nx + j] << " ";
+        }
+        std::cout << "\n";
+    }
 }
