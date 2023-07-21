@@ -1,5 +1,9 @@
 # Programming Parallel Computers
 
+Exercises from <https://ppc.cs.aalto.fi/>
+
+Currently some #1 and Top 3 solutions on the leaderboard.
+
 ## Todos (potentially)
 
 -   Figure out how to check the compiler type so I don't have to keep re-doing the intrinsics file switching gcc/msvc
@@ -19,6 +23,12 @@ AVX512 permute instructions
 -   refactor quicksort into a separate partition function
 
 ## Updates
+
+2023/15/7
+
+![](images/paste-54E9A816.png){width="619"}
+
+-   ![](images/paste-52EB1C87.png)
 
 2023/08/7
 
