@@ -1,6 +1,6 @@
 # Programming Parallel Computers
 
-Exercises from <https://ppc.cs.aalto.fi/>
+Exercises from 
 
 Currently some #1 and Top 3 solutions on the leaderboard.
 
