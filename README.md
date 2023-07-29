@@ -1,6 +1,6 @@
 # Programming Parallel Computers
 
-Exercises from 
+Exercises from
 
 Currently some #1 and Top 3 solutions on the leaderboard.
 
@@ -23,6 +23,10 @@ AVX512 permute instructions
 -   refactor quicksort into a separate partition function
 
 ## Updates
+
+2023/29/07
+
+-   really bizarre issue where changing the kernel line `if(i \>= ny \|\| j \>= ny \|\| j \> i) return;` to `if(i >= ny || j >= ny) return;` there's no issue?
 
 2023/15/7
 
