@@ -24,6 +24,10 @@ AVX512 permute instructions
 
 ## Updates
 
+2024/2/3
+-   okay so turns out there's a segfault probably related to WSL2 + Unified Memory issues...to resolve this I got a new laptop with good linux support lol
+
+
 2023/29/07
 
 -   really bizarre issue where changing the kernel line `if(i \>= ny \|\| j \>= ny \|\| j \> i) return;` to `if(i >= ny || j >= ny) return;` there's no issue?
